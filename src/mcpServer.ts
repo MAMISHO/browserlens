@@ -61,6 +61,25 @@ const browserWaitForSchema = z.object({
   state: z.enum(["attached", "detached", "visible", "hidden"]).optional()
 });
 const browserEvaluateSchema = z.object({ script: z.string().min(1) });
+const browserOpenInteractiveSchema = z.object({
+  url: z.string().optional(),
+  user_data_dir: z.string().optional(),
+  channel: z.string().optional(),
+  viewport: z
+    .object({
+      width: z.number().int().positive(),
+      height: z.number().int().positive()
+    })
+    .optional()
+});
+const browserUseHeadlessSchema = z.object({
+  viewport: z
+    .object({
+      width: z.number().int().positive(),
+      height: z.number().int().positive()
+    })
+    .optional()
+});
 
 const analyzeSchema = z.object({
   goal: z.string().min(1),
@@ -206,6 +225,49 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       }
     },
     {
+      name: "browser_open_interactive",
+      description: "Switch to a visible Playwright browser so the user can log in, complete 2FA/SSO, or perform manual actions. This closes the current browser session and opens a headed session. Use user_data_dir for a persistent profile.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          url: { type: "string" },
+          user_data_dir: {
+            type: "string",
+            description: "Optional persistent Playwright user data directory. Also configurable with BROWSERLENS_USER_DATA_DIR."
+          },
+          channel: {
+            type: "string",
+            description: "Optional browser channel, for example chrome. Also configurable with BROWSERLENS_CHANNEL."
+          },
+          viewport: {
+            type: "object",
+            properties: {
+              width: { type: "number" },
+              height: { type: "number" }
+            },
+            required: ["width", "height"]
+          }
+        }
+      }
+    },
+    {
+      name: "browser_use_headless",
+      description: "Close the current browser session and start a fresh headless Playwright session. Use after interactive login/testing when a clean automated browser is desired.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          viewport: {
+            type: "object",
+            properties: {
+              width: { type: "number" },
+              height: { type: "number" }
+            },
+            required: ["width", "height"]
+          }
+        }
+      }
+    },
+    {
       name: "capture_screenshot",
       description: "Capture a screenshot with Playwright from the active page or a URL/selector and store it locally. Returns only JSON metadata such as image_path, dimensions, and blank_like; never image bytes. Use delay_ms when a canvas, iframe, animation, or client-rendered content needs extra time after navigation or selector visibility before capture. If blank_like is true, the capture is probably not useful for visual comparison and should be recaptured from the rendered canvas/content, often with delay_ms. For visual understanding, pass image_path to analyze_image, compare_images, or extract_text.",
       inputSchema: {
@@ -306,6 +368,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
         return json(await playwrightService.waitFor(browserWaitForSchema.parse(args)));
       case "browser_evaluate":
         return json(await playwrightService.evaluate(browserEvaluateSchema.parse(args)));
+      case "browser_open_interactive":
+        return json(await playwrightService.openInteractive(browserOpenInteractiveSchema.parse(args)));
+      case "browser_use_headless":
+        return json(await playwrightService.useHeadless(browserUseHeadlessSchema.parse(args)));
       case "capture_screenshot":
         return json(await playwrightService.captureScreenshot(screenshotSchema.parse(args)));
       case "analyze_image":

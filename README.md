@@ -10,6 +10,7 @@ It provides:
 
 - local command execution with bounded timeouts
 - Playwright-based browser navigation, DOM snapshots, clicks, input, key presses, waits, and page evaluation
+- runtime switching between headless automation and an interactive visible browser for login/manual intervention
 - timestamped browser screenshots stored in user-writable per-project directories
 - visual analysis and image comparison through Ollama multimodal models
 - OCR and image-to-Markdown extraction through Ollama
@@ -67,7 +68,7 @@ BrowserLens and a browser-control MCP can be configured together in the same age
 | Need visual comparison between two browser screenshots | BrowserLens |
 | Need OCR or image-to-Markdown from a screenshot/document | BrowserLens |
 | Need an already authenticated browser session | Browser MCP / browser-use MCP |
-| User must manually log in, pass 2FA, solve SSO, or intervene | Browser MCP / browser-use MCP |
+| User must manually log in, pass 2FA, solve SSO, or intervene | BrowserLens interactive mode or browser MCP / browser-use MCP |
 | Need local visual analysis after a browser MCP capture | Browser MCP plus BrowserLens |
 
 When both are available, agents should choose the smallest tool for the current step:
@@ -75,7 +76,7 @@ When both are available, agents should choose the smallest tool for the current 
 ```mermaid
 flowchart TD
   Task["Browser task"] --> Auth{"Needs existing login<br/>or human intervention?"}
-  Auth -->|"Yes"| BrowserMCP["Use browser MCP<br/>for interactive/authenticated browser"]
+  Auth -->|"Yes"| BrowserMCP["Use BrowserLens interactive mode<br/>or browser MCP"]
   Auth -->|"No"| BrowserLens["Use BrowserLens<br/>for Playwright browser control"]
   BrowserMCP --> Visual{"Need local visual analysis,<br/>comparison, OCR, or Markdown?"}
   BrowserLens --> Visual
@@ -83,7 +84,7 @@ flowchart TD
   Visual -->|"No"| Done["Return browser/DOM result"]
 ```
 
-BrowserLens currently implements its own Playwright browser service. It does not call another browser MCP internally, and that is intentional: keeping the tools independent lets agents select the right browser path for each task.
+BrowserLens currently implements its own Playwright browser service. It does not call another browser MCP internally, and that is intentional: keeping the tools independent lets agents select the right browser path for each task. For many login and manual-intervention flows, BrowserLens can now open its own visible Playwright browser with `browser_open_interactive`.
 
 ## Recommended Model Setup
 
@@ -266,6 +267,9 @@ OLLAMA_BASE_URL=http://localhost:11434
 VISION_MODEL=qwen3-vl:8b
 OCR_MODEL=deepseek-ocr
 BROWSERLENS_SCREENSHOT_DIR=/custom/writable/path
+BROWSERLENS_HEADLESS=true
+BROWSERLENS_USER_DATA_DIR=/custom/browser-profile
+BROWSERLENS_CHANNEL=chrome
 ```
 
 By default, screenshots are written to an operating-system user data directory and grouped by project name:
@@ -332,6 +336,16 @@ For UI debugging tasks:
 5. analyze_image, extract_text, or extract_markdown if the main model needs visual confirmation.
 ```
 
+For login, 2FA, SSO, or manual-intervention tasks:
+
+```text
+1. browser_open_interactive with the target URL.
+2. Ask the user to log in or complete the required manual action in the visible browser.
+3. browser_wait_for or browser_snapshot to confirm the page state.
+4. capture_screenshot and analyze_image/compare_images/extract_text/extract_markdown as needed.
+5. Continue in the interactive browser, or call browser_use_headless for a fresh automated session.
+```
+
 ## Tools
 
 ### `execute_code`
@@ -367,6 +381,8 @@ These wrap Playwright and return text/JSON only:
 - `browser_press_key`
 - `browser_wait_for`
 - `browser_evaluate`
+- `browser_open_interactive`
+- `browser_use_headless`
 
 Example:
 
@@ -382,6 +398,37 @@ Example:
 ```
 
 Use `browser_snapshot` for DOM, text, selectors, forms, and page state. Do not use it as the final source of truth for visual parity because similar DOM can render with different spacing, typography, colors, composition, or imagery.
+
+### `browser_open_interactive`
+
+Closes the current browser session and opens a visible Playwright browser. Use this when the user must log in, pass 2FA/SSO, solve a manual step, or inspect the browser directly.
+
+```json
+{
+  "url": "https://example.com/login",
+  "user_data_dir": "/Users/example/.browserlens-profile",
+  "channel": "chrome",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  }
+}
+```
+
+`user_data_dir` enables a persistent browser profile so cookies/session data can survive between runs. It can also be configured with `BROWSERLENS_USER_DATA_DIR`. `channel` can be configured with `BROWSERLENS_CHANNEL`.
+
+### `browser_use_headless`
+
+Closes the current browser session and starts a fresh headless Playwright session.
+
+```json
+{
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  }
+}
+```
 
 ### `capture_screenshot`
 

@@ -1,4 +1,4 @@
-import { chromium, type Browser, type Page } from "playwright";
+import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 import sharp from "sharp";
 import { resolveScreenshotPath } from "./screenshotStorage.js";
 import type { ToolResult } from "./types.js";
@@ -61,9 +61,28 @@ export interface BrowserEvaluateInput {
   script: string;
 }
 
+export interface BrowserOpenInteractiveInput {
+  url?: string;
+  user_data_dir?: string;
+  channel?: string;
+  viewport?: {
+    width: number;
+    height: number;
+  };
+}
+
+export interface BrowserUseHeadlessInput {
+  viewport?: {
+    width: number;
+    height: number;
+  };
+}
+
 export class PlaywrightService {
   private browser: Browser | null = null;
+  private context: BrowserContext | null = null;
   private page: Page | null = null;
+  private mode: "headless" | "interactive" = "headless";
 
   async navigate(input: BrowserNavigateInput): Promise<ToolResult<Record<string, unknown>>> {
     try {
@@ -266,26 +285,102 @@ export class PlaywrightService {
     }
   }
 
+  async openInteractive(input: BrowserOpenInteractiveInput = {}): Promise<ToolResult<Record<string, unknown>>> {
+    try {
+      await this.close();
+      this.mode = "interactive";
+
+      const viewport = input.viewport ?? { width: 1440, height: 1000 };
+      const userDataDir = input.user_data_dir ?? process.env.BROWSERLENS_USER_DATA_DIR;
+      const channel = input.channel ?? process.env.BROWSERLENS_CHANNEL;
+
+      if (userDataDir) {
+        this.context = await chromium.launchPersistentContext(userDataDir, {
+          headless: false,
+          channel,
+          viewport
+        });
+      } else {
+        this.browser = await chromium.launch({ headless: false, channel });
+        this.context = await this.browser.newContext({ viewport });
+      }
+
+      this.page = this.context.pages()[0] ?? (await this.context.newPage());
+      if (input.url) {
+        await this.page.goto(input.url, { waitUntil: "domcontentloaded", timeout: 30_000 });
+      }
+
+      return {
+        interactive: true,
+        mode: this.mode,
+        url: this.page.url(),
+        title: await this.page.title(),
+        persistent_profile: Boolean(userDataDir),
+        user_data_dir: userDataDir ?? null,
+        channel: channel ?? null,
+        message:
+          "Interactive browser opened. The user can log in or complete manual actions, then the agent can continue with browser_wait_for, browser_snapshot, capture_screenshot, analyze_image, compare_images, extract_text, or extract_markdown."
+      };
+    } catch (error) {
+      return this.error(error, "Unknown interactive browser error.");
+    }
+  }
+
+  async useHeadless(input: BrowserUseHeadlessInput = {}): Promise<ToolResult<Record<string, unknown>>> {
+    try {
+      await this.close();
+      this.mode = "headless";
+      const page = await this.getPage(input.viewport);
+      return {
+        interactive: false,
+        mode: this.mode,
+        url: page.url(),
+        message: "Headless browser session started."
+      };
+    } catch (error) {
+      return this.error(error, "Unknown headless browser error.");
+    }
+  }
+
   async close(): Promise<void> {
     await this.page?.close().catch(() => undefined);
     this.page = null;
-    await this.browser?.close();
+    await this.context?.close().catch(() => undefined);
+    this.context = null;
+    await this.browser?.close().catch(() => undefined);
     this.browser = null;
   }
 
-  private async getBrowser(): Promise<Browser> {
-    if (!this.browser) {
-      this.browser = await chromium.launch({ headless: true });
+  private async getBrowser(): Promise<BrowserContext> {
+    if (!this.context) {
+      const headless = process.env.BROWSERLENS_HEADLESS?.toLowerCase() !== "false";
+      const channel = process.env.BROWSERLENS_CHANNEL;
+      const userDataDir = process.env.BROWSERLENS_USER_DATA_DIR;
+      this.mode = headless ? "headless" : "interactive";
+
+      if (userDataDir) {
+        this.context = await chromium.launchPersistentContext(userDataDir, {
+          headless,
+          channel,
+          viewport: { width: 1440, height: 1000 }
+        });
+      } else {
+        this.browser = await chromium.launch({ headless, channel });
+        this.context = await this.browser.newContext({
+          viewport: { width: 1440, height: 1000 }
+        });
+      }
     }
-    return this.browser;
+    return this.context;
   }
 
   private async getPage(viewport?: { width: number; height: number }): Promise<Page> {
     if (!this.page || this.page.isClosed()) {
-      const browser = await this.getBrowser();
-      this.page = await browser.newPage({
-        viewport: viewport ?? { width: 1440, height: 1000 }
-      });
+      const context = await this.getBrowser();
+      this.page = context.pages()[0] ?? (await context.newPage());
+      if (viewport) {
+        await this.page.setViewportSize(viewport);
+      }
     } else if (viewport) {
       await this.page.setViewportSize(viewport);
     }

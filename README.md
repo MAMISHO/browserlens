@@ -1,18 +1,18 @@
 # BrowserLens
 
-BrowserLens is a production-oriented Model Context Protocol server that gives text-only AI agents browser control and local visual understanding.
+BrowserLens is a production-oriented Model Context Protocol server that gives AI agents browser control and local visual understanding.
 
-It solves a practical gap: strong coding agents are often fast and cheap when used as text-only models, but they cannot see the browser they are controlling. BrowserLens lets those agents navigate pages, inspect DOM, take timestamped screenshots, compare rendered images, and extract text from images through local Ollama models. The main agent receives compact JSON, not raw image payloads, which keeps token usage low and allows non-multimodal models to work on visual browser tasks.
+It solves a practical gap in agentic browser work: many browser-control MCPs need screenshots for verification, but text-only agents cannot consume those screenshots directly, and multimodal agents can burn many tokens when every visual check is sent to the main model. BrowserLens lets agents navigate pages, inspect DOM, take timestamped screenshots, compare rendered images, extract OCR text, and convert images to Markdown through local Ollama models. The main agent receives compact JSON or Markdown, not raw image payloads.
 
 This project has been tested successfully in workflows where a fast text-only model, such as **DeepSeek V4 Flash** or the local Gemma setup used during development, acts as the main agent and BrowserLens delegates visual interpretation to local Ollama models.
 
 It provides:
 
 - local command execution with bounded timeouts
-- Playwright navigation, DOM snapshots, clicks, input, key presses, waits, and page evaluation
+- Playwright-based browser navigation, DOM snapshots, clicks, input, key presses, waits, and page evaluation
 - timestamped browser screenshots stored in user-writable per-project directories
 - visual analysis and image comparison through Ollama multimodal models
-- OCR through Ollama
+- OCR and image-to-Markdown extraction through Ollama
 
 BrowserLens is a capability layer only. It does not include autonomous loops or agent reasoning.
 
@@ -20,31 +20,70 @@ BrowserLens is a capability layer only. It does not include autonomous loops or 
 
 Browser automation alone can tell an agent what the DOM says, but not whether the page actually looks right. A rendered UI can be broken while the DOM appears reasonable: wrong crop, missing image, bad spacing, invisible text, overlapped controls, blank canvas, iframe timing issues, or layout drift.
 
-Multimodal cloud models can inspect screenshots, but they can be expensive, slower, or unavailable in privacy-sensitive local workflows. BrowserLens keeps the expensive visual context local:
+BrowserLens sits under the agent as a browser and visual verification layer. It uses Playwright internally, and it is useful alongside browser-control MCP workflows where screenshots are part of the verification path.
 
-- the main agent can be text-only, such as DeepSeek V4 Flash
-- screenshots stay on disk and are passed by file path
-- local vision/OCR models return structured JSON summaries
-- the main model spends tokens on decisions, not image bytes
+BrowserLens does not require a separate browser MCP server, but it is designed to coexist with one. In some tasks the best flow is BrowserLens alone; in others the agent may use a dedicated browser MCP for a real/authenticated browser session and use BrowserLens for local screenshot analysis, comparison, OCR, and Markdown extraction.
+
+For text-only models:
+
+- it prevents the browser verification flow from breaking when a task requires screenshots
+- the model can control the browser and request visual checks without receiving images
+- local vision/OCR models translate screenshots into actionable text, JSON, or Markdown
+
+For multimodal models:
+
+- it can reduce token usage by keeping repeated screenshot inspection local
+- the main model can ask for targeted JSON summaries instead of full image context
+- visual comparison can be delegated to a local model before escalating anything expensive
+
+In both cases, screenshots stay on disk and are passed by file path. The main model spends tokens on decisions, not image bytes.
 
 ## How It Works
 
 ```mermaid
 flowchart LR
-  A["Text-only agent<br/>DeepSeek V4 Flash, Gemma, OpenCode, Codex, etc."] -->|"MCP tool call"| B["BrowserLens MCP"]
-  B --> C["Playwright browser control"]
+  A["Agent<br/>text-only or multimodal"] -->|"MCP tool call"| B["BrowserLens MCP"]
+  B --> C["Playwright browser control<br/>browser MCP-style workflow"]
   C --> D["Rendered page"]
   B --> E["Timestamped screenshot<br/>user data directory"]
   E --> F["Local Ollama vision model<br/>qwen3-vl:8b"]
   E --> G["Local Ollama OCR model<br/>deepseek-ocr"]
   F --> H["Strict JSON visual report"]
-  G --> I["Structured OCR text"]
+  G --> I["Structured OCR text<br/>or Markdown"]
   H --> A
   I --> A
   B -->|"DOM/text metadata"| A
 ```
 
-The important design choice is that screenshots are never returned as MCP image bytes. BrowserLens returns local paths and structured JSON so text-only models can reason about visual state without becoming multimodal themselves.
+The important design choice is that screenshots are never returned as MCP image bytes. BrowserLens returns local paths, structured JSON, OCR text, or Markdown so text-only models can reason about visual state and multimodal models can avoid unnecessary image-token spend.
+
+## Using BrowserLens With Browser MCPs
+
+BrowserLens and a browser-control MCP can be configured together in the same agent. They solve overlapping but different parts of the problem:
+
+| Situation | Prefer |
+| --- | --- |
+| Public page, localhost app, deterministic UI verification | BrowserLens |
+| Need visual comparison between two browser screenshots | BrowserLens |
+| Need OCR or image-to-Markdown from a screenshot/document | BrowserLens |
+| Need an already authenticated browser session | Browser MCP / browser-use MCP |
+| User must manually log in, pass 2FA, solve SSO, or intervene | Browser MCP / browser-use MCP |
+| Need local visual analysis after a browser MCP capture | Browser MCP plus BrowserLens |
+
+When both are available, agents should choose the smallest tool for the current step:
+
+```mermaid
+flowchart TD
+  Task["Browser task"] --> Auth{"Needs existing login<br/>or human intervention?"}
+  Auth -->|"Yes"| BrowserMCP["Use browser MCP<br/>for interactive/authenticated browser"]
+  Auth -->|"No"| BrowserLens["Use BrowserLens<br/>for Playwright browser control"]
+  BrowserMCP --> Visual{"Need local visual analysis,<br/>comparison, OCR, or Markdown?"}
+  BrowserLens --> Visual
+  Visual -->|"Yes"| LensVisual["Use BrowserLens visual tools<br/>analyze_image / compare_images / extract_text / extract_markdown"]
+  Visual -->|"No"| Done["Return browser/DOM result"]
+```
+
+BrowserLens currently implements its own Playwright browser service. It does not call another browser MCP internally, and that is intentional: keeping the tools independent lets agents select the right browser path for each task.
 
 ## Recommended Model Setup
 
@@ -53,7 +92,7 @@ There are two model roles:
 - Main agent: **DeepSeek V4 Flash**, Gemma, or another strong text-only coding model
 - Browser control: BrowserLens through MCP
 - Visual analysis: a local Qwen vision model through Ollama
-- OCR: a local OCR model through Ollama
+- OCR/Markdown extraction: a local OCR model through Ollama
 
 The package defaults are:
 
@@ -61,7 +100,7 @@ The package defaults are:
 | --- | --- | --- |
 | Ollama endpoint | `OLLAMA_BASE_URL` | `http://localhost:11434` |
 | Visual analysis/comparison | `VISION_MODEL` | `qwen3-vl:8b` |
-| OCR | `OCR_MODEL` | `deepseek-ocr` |
+| OCR / Markdown extraction | `OCR_MODEL` | `deepseek-ocr` |
 
 The development setup that has worked well is:
 
@@ -69,7 +108,7 @@ The development setup that has worked well is:
 | --- | --- |
 | Main text-only agent | DeepSeek V4 Flash or your local Gemma setup |
 | Vision/comparison | Qwen vision variant configured in `VISION_MODEL` |
-| OCR | `deepseek-ocr` |
+| OCR / Markdown extraction | `deepseek-ocr` |
 
 Default environment:
 
@@ -264,10 +303,10 @@ sequenceDiagram
   MCP->>Disk: Save timestamped image
   MCP-->>Agent: image_path, dimensions, blank_like
 
-  Agent->>MCP: analyze_image / compare_images / extract_text
+  Agent->>MCP: analyze_image / compare_images / extract_text / extract_markdown
   MCP->>Vision: Send optimized local image
-  Vision-->>MCP: Structured JSON
-  MCP-->>Agent: visual issues or OCR text
+  Vision-->>MCP: Structured JSON, OCR text, or Markdown
+  MCP-->>Agent: visual issues, OCR text, or Markdown
 
   Agent->>Agent: Decide next browser or code action
 ```
@@ -290,7 +329,7 @@ For UI debugging tasks:
 2. browser_snapshot to inspect controls, text, selectors, and state.
 3. browser_click/browser_fill/browser_press_key/browser_wait_for as needed.
 4. capture_screenshot to verify the rendered result.
-5. analyze_image or extract_text if the main model needs visual confirmation.
+5. analyze_image, extract_text, or extract_markdown if the main model needs visual confirmation.
 ```
 
 ## Tools
@@ -426,6 +465,25 @@ Uses the configured OCR model and returns visible text plus structured blocks.
 }
 ```
 
+### `extract_markdown`
+
+Uses the configured OCR model and returns readable content as Markdown. This is useful when the screenshot is a document, table, form, article, code block, or dense UI that an agent should consume as structured text.
+
+```json
+{
+  "image_path": "/path/to/screenshot-or-document.jpg",
+  "instructions": "Preserve tables and headings."
+}
+```
+
+Output:
+
+```json
+{
+  "markdown": "# Invoice\n\n| Item | Amount |\n| --- | --- |\n| Hosting | 20 EUR |"
+}
+```
+
 ## Architecture
 
 BrowserLens keeps the MCP transport thin and delegates behavior to services:
@@ -455,7 +513,7 @@ src/
   playwrightService.ts   browser automation boundary
   screenshotStorage.ts   screenshot path and OS storage policy
   visionService.ts       visual analysis and comparison use cases
-  ocrService.ts          OCR use case
+  ocrService.ts          OCR and image-to-Markdown use cases
   ollamaClient.ts        Ollama HTTP adapter and model lifecycle
   imageUtils.ts          image optimization helpers
   types.ts               shared result types

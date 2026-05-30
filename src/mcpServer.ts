@@ -79,6 +79,11 @@ const extractTextSchema = z.object({
   image_path: z.string().min(1)
 });
 
+const extractMarkdownSchema = z.object({
+  image_path: z.string().min(1),
+  instructions: z.string().optional()
+});
+
 const ollama = new OllamaClient();
 const executeService = new ExecuteService();
 const playwrightService = new PlaywrightService();
@@ -262,6 +267,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         },
         required: ["image_path"]
       }
+    },
+    {
+      name: "extract_markdown",
+      description: "Extract readable content from an image as clean Markdown using the configured OCR model, commonly deepseek-ocr. Useful for screenshots, documents, tables, forms, and UI text that a text-only or multimodal agent should consume without image tokens.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          image_path: { type: "string" },
+          instructions: {
+            type: "string",
+            description: "Optional guidance for preserving tables, forms, code blocks, language, or other document-specific structure."
+          }
+        },
+        required: ["image_path"]
+      }
     }
   ]
 }));
@@ -294,6 +314,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
         return json(await visionService.compareImages(compareImagesSchema.parse(args)));
       case "extract_text":
         return json(await ocrService.extractText(extractTextSchema.parse(args)));
+      case "extract_markdown":
+        return json(await ocrService.extractMarkdown(extractMarkdownSchema.parse(args)));
       default:
         return json({ error: true, message: `Unknown tool: ${name}` }, true);
     }

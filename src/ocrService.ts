@@ -22,6 +22,15 @@ export interface ExtractTextOutput {
   blocks: Array<{ text: string; role?: string }>;
 }
 
+export interface ExtractMarkdownInput {
+  image_path: string;
+  instructions?: string;
+}
+
+export interface ExtractMarkdownOutput {
+  markdown: string;
+}
+
 export class OcrService {
   constructor(
     private readonly ollama: OllamaClient,
@@ -68,6 +77,31 @@ Do not include markdown, code fences, commentary, or extra keys. Preserve punctu
       };
     }
   }
+
+  async extractMarkdown(input: ExtractMarkdownInput): Promise<ToolResult<ExtractMarkdownOutput>> {
+    try {
+      const image = await imageToOptimizedBase64(input.image_path);
+      const response = await this.ollama.generate({
+        model: this.model,
+        images: [image],
+        options: { temperature: 0 },
+        prompt: `Extract the readable content from the attached image as clean Markdown.
+
+Preserve headings, paragraphs, lists, tables, code blocks, labels, and meaningful line breaks.
+Do not invent content that is not visible.
+Do not wrap the result in a code fence.
+${input.instructions ? `Additional instructions: ${input.instructions}` : ""}`
+      });
+
+      return { markdown: stripMarkdownFence(response.trim()) };
+    } catch (error) {
+      return {
+        error: true,
+        message: error instanceof Error ? error.message : "Unknown OCR markdown error.",
+        details: error
+      };
+    }
+  }
 }
 
 function extractJsonObject(response: string): string {
@@ -78,6 +112,17 @@ function extractJsonObject(response: string): string {
   const end = trimmed.lastIndexOf("}");
   if (start >= 0 && end > start) {
     return trimmed.slice(start, end + 1);
+  }
+  return trimmed;
+}
+
+function stripMarkdownFence(response: string): string {
+  const trimmed = response.trim();
+  if (!trimmed.startsWith("```")) return trimmed;
+
+  const lines = trimmed.split(/\r?\n/);
+  if (lines.length >= 2 && lines[lines.length - 1].trim() === "```") {
+    return lines.slice(1, -1).join("\n").trim();
   }
   return trimmed;
 }

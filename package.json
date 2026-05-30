@@ -1,0 +1,47 @@
+{
+  "name": "browserlens",
+  "version": "0.1.0",
+  "description": "Vision-focused MCP server for browser automation, timestamped screenshots, visual analysis, and OCR through local Ollama models.",
+  "type": "module",
+  "bin": {
+    "browserlens": "./dist/mcpServer.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "npm run clean && tsc --emitDeclarationOnly && node scripts/bundle.mjs",
+    "clean": "rm -rf dist",
+    "start": "node dist/mcpServer.js",
+    "dev": "tsx src/mcpServer.ts",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "vision",
+    "playwright",
+    "ollama",
+    "ocr"
+  ],
+  "license": "MIT",
+  "author": "",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.13.0",
+    "playwright": "^1.52.0",
+    "sharp": "^0.33.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "esbuild": "^0.28.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

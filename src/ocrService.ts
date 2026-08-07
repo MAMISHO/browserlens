@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { imageToOptimizedBase64 } from "./imageUtils.js";
 import { OllamaClient } from "./ollamaClient.js";
+import type { ModelClient } from "./modelClient.js";
+import { createOcrProvider } from "./providerConfig.js";
 import type { ToolResult } from "./types.js";
 
 const ocrSchema = z.object({
@@ -32,18 +34,26 @@ export interface ExtractMarkdownOutput {
 }
 
 export class OcrService {
+  private readonly client: ModelClient;
+  private readonly model: string;
+  private readonly provider: string;
+
   constructor(
     private readonly ollama: OllamaClient,
-    private readonly model = process.env.OCR_MODEL ?? "deepseek-ocr"
-  ) {}
+    provider = createOcrProvider(ollama)
+  ) {
+    this.client = provider.client;
+    this.model = provider.model;
+    this.provider = provider.provider;
+  }
 
   async extractText(input: ExtractTextInput): Promise<ToolResult<ExtractTextOutput>> {
     try {
       const image = await imageToOptimizedBase64(input.image_path);
-      const response = await this.ollama.generate({
+      const response = await this.client.generate({
         model: this.model,
         images: [image],
-        format: "json",
+        format: this.provider === "ollama" ? "json" : undefined,
         options: { temperature: 0 },
         prompt: `Extract all visible text from the attached image.
 
@@ -81,7 +91,7 @@ Do not include markdown, code fences, commentary, or extra keys. Preserve punctu
   async extractMarkdown(input: ExtractMarkdownInput): Promise<ToolResult<ExtractMarkdownOutput>> {
     try {
       const image = await imageToOptimizedBase64(input.image_path);
-      const response = await this.ollama.generate({
+      const response = await this.client.generate({
         model: this.model,
         images: [image],
         options: { temperature: 0 },

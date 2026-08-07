@@ -1,7 +1,7 @@
 {
   "name": "browserlens",
   "version": "0.1.0",
-  "description": "Vision-focused MCP server for browser automation, timestamped screenshots, visual analysis, and OCR through local Ollama models.",
+  "description": "Vision-focused MCP server for browser automation, timestamped screenshots, visual analysis, OCR, and image-to-Markdown through Ollama, OpenAI, or custom providers.",
   "type": "module",
   "bin": {
     "browserlens": "./dist/mcpServer.js"
@@ -9,6 +9,9 @@
   "files": [
     "dist",
     "README.md",
+    "CONTRIBUTING.md",
+    "docs",
+    "browserlens-config.example.json",
     "LICENSE"
   ],
   "scripts": {
@@ -31,14 +34,15 @@
   "author": "",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.13.0",
+    "openai": "^7.4.0",
     "playwright": "^1.52.0",
-    "sharp": "^0.33.5",
+    "sharp": "^0.35.3",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "esbuild": "^0.28.0",
-    "tsx": "^4.19.2",
+    "tsx": "^4.23.11",
     "typescript": "^5.7.2"
   },
   "engines": {

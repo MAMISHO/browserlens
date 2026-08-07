@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { comparisonContactSheetBase64, imageToOptimizedBase64 } from "./imageUtils.js";
 import { OllamaClient } from "./ollamaClient.js";
+import { createVisionProvider } from "./providerConfig.js";
+import type { ModelClient } from "./modelClient.js";
 import type { ToolResult, VisionAnalysis } from "./types.js";
 
 const visionSchema = z.object({
@@ -29,21 +31,29 @@ export interface CompareImagesInput {
 }
 
 export class VisionService {
+  private readonly client: ModelClient;
+  private readonly model: string;
+  private readonly provider: string;
+
   constructor(
     private readonly ollama: OllamaClient,
-    private readonly model = process.env.VISION_MODEL ?? "qwen3-vl:8b"
-  ) {}
+    provider = createVisionProvider(ollama)
+  ) {
+    this.client = provider.client;
+    this.model = provider.model;
+    this.provider = provider.provider;
+  }
 
   async analyzeImage(input: AnalyzeImageInput): Promise<ToolResult<VisionAnalysis>> {
     try {
       const image = await imageToOptimizedBase64(input.image_path);
       const prompt = this.buildPrompt(input, false);
-      const first = await this.ollama.generate({
+      const first = await this.client.generate({
         model: this.model,
         prompt,
         images: [image],
-        format: "json",
-        options: { temperature: 0, num_predict: 700 }
+        format: this.provider === "ollama" ? "json" : undefined,
+        options: { temperature: 0, num_predict: 700, maxTokens: 700 }
       });
 
       const parsed = this.parseVisionResponse(first);
@@ -52,12 +62,12 @@ export class VisionService {
       const firstFallback = this.fallbackFromUnstructuredResponse(first, false);
       if (firstFallback) return firstFallback;
 
-      const retry = await this.ollama.generate({
+      const retry = await this.client.generate({
         model: this.model,
         prompt: this.buildPrompt(input, true, first),
         images: [image],
-        format: "json",
-        options: { temperature: 0, num_predict: 700 }
+        format: this.provider === "ollama" ? "json" : undefined,
+        options: { temperature: 0, num_predict: 700, maxTokens: 700 }
       });
 
       const retryParsed = this.parseVisionResponse(retry);
@@ -87,12 +97,12 @@ export class VisionService {
         input.candidate_image_path
       );
       const prompt = this.buildComparePrompt(input, false);
-      const first = await this.ollama.generate({
+      const first = await this.client.generate({
         model: this.model,
         prompt,
         images: [comparisonImage],
-        format: "json",
-        options: { temperature: 0, num_predict: 700 }
+        format: this.provider === "ollama" ? "json" : undefined,
+        options: { temperature: 0, num_predict: 700, maxTokens: 700 }
       });
 
       const parsed = this.parseVisionResponse(first);
@@ -101,12 +111,12 @@ export class VisionService {
       const firstFallback = this.fallbackFromUnstructuredResponse(first, true);
       if (firstFallback) return firstFallback;
 
-      const retry = await this.ollama.generate({
+      const retry = await this.client.generate({
         model: this.model,
         prompt: this.buildComparePrompt(input, true, first),
         images: [comparisonImage],
-        format: "json",
-        options: { temperature: 0, num_predict: 700 }
+        format: this.provider === "ollama" ? "json" : undefined,
+        options: { temperature: 0, num_predict: 700, maxTokens: 700 }
       });
 
       const retryParsed = this.parseVisionResponse(retry);

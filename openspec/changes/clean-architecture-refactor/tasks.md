@@ -45,11 +45,11 @@ Commit units: U1 P0+P1 · U2 P2+P3 · U3 P4 · U4 P5 · U5 P6+P7 (switchover; ro
 
 ## Phase 4: vision/ + ocr/
 
-- [ ] 4.1 `vision/tokens.ts` (VisionService, VisionModelConfig: ProviderSelection) + `domain/models/VisionModels.ts` (Severity, VisionIssue, VisionAnalysis, from types.ts).
-- [ ] 4.2 `application/DTOs/vision.dto.ts` + `Services/vision.service.ts` (IVisionService: analyzeImage, compareImages).
-- [ ] 4.3 `Services/impl/VisionServiceImpl.ts` (@injectable; @inject VisionModelConfig + ImageProcessor; prompts/retry/fallback, from visionService.ts).
-- [ ] 4.4 `application/Mappers/visionModel.mapper.ts` (zod .transform: LLM snake JSON → camelCase VisionAnalysis; no automapper).
-- [ ] 4.5 `infra/`: OllamaClientImpl.ts (queue/activeModel/unload, from ollamaClient.ts) + ChatCompletionsClientImpl.ts (from chatCompletionsClient.ts) + `vision/index.ts`.
+- [x] 4.1 `vision/tokens.ts` (VisionService, VisionModelConfig: ProviderSelection) + `domain/models/VisionModels.ts` (Severity, VisionIssue, VisionAnalysis, from types.ts).
+- [x] 4.2 `application/DTOs/vision.dto.ts` + `Services/vision.service.ts` (IVisionService: analyzeImage, compareImages).
+- [x] 4.3 `Services/impl/VisionServiceImpl.ts` (@injectable; @inject VisionModelConfig + ImageProcessor; prompts/retry/fallback, from visionService.ts).
+- [x] 4.4 `application/Mappers/visionModel.mapper.ts` (zod .transform: LLM snake JSON → camelCase VisionAnalysis; no automapper).
+- [x] 4.5 `infra/`: OllamaClientImpl.ts (queue/activeModel/unload, from ollamaClient.ts) + ChatCompletionsClientImpl.ts (from chatCompletionsClient.ts) + `vision/index.ts`.
 - [ ] 4.6 `ocr/tokens.ts` (OcrService, OcrModelConfig) + `domain/models/OcrModels.ts` + `application/DTOs/ocr.dto.ts` + `Services/ocr.service.ts` (IOcrService).
 - [ ] 4.7 `Services/impl/OcrServiceImpl.ts` (@injectable; @inject OcrModelConfig + ImageProcessor; prompts/fence-strip, from ocrService.ts) + `ocr/index.ts`.
 

@@ -1,0 +1,22 @@
+change: clean-architecture-refactor
+phase: tasks
+artifact_store: hybrid
+delivery_strategy: work-unit-commits-no-pr
+commit_units:
+  - unit_1: "P0+P1 shared/foundation"
+  - unit_2: "P2+P3 execution/browser"
+  - unit_3: "P4 vision/ocr"
+  - unit_4: "P5 mcp"
+  - unit_5: "P6+P7 composition root + build"
+  - unit_6: "P8 verification"
+artifacts:
+  init: true
+  proposal: true
+  specs: true
+  design: true
+  tasks: true
+tasks_progress:
+  completed: []
+  pending: [0.1-8.3]
+last_updated: 2026-08-08
+next: sdd-apply

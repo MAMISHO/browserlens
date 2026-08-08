@@ -242,6 +242,82 @@ For OpenCode, put the local model configuration in the MCP server entry. The exa
 }
 ```
 
+#### Using environment variables for API keys
+
+For OpenCode, the `env` block is the single source of truth for the server process. Instead of hardcoding an API key in `opencode.json`, use the `{env:VAR}` interpolation syntax. OpenCode resolves the value from its own environment when it loads the config, and the MCP server receives only the resolved token. The server never sees the environment variable name, so you can use any name you like in your shell.
+
+`{env:VAR}` is OpenCode-specific syntax (not the shell-style `${VAR}`) and is resolved by OpenCode itself, so the value must exist in the environment that launches OpenCode.
+
+Ollama (no API key required):
+
+```json
+{
+  "mcp": {
+    "browserlens": {
+      "type": "local",
+      "command": ["node", "/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "VISION_PROVIDER": "ollama",
+        "VISION_MODEL": "qwen3-vl:8b",
+        "OCR_PROVIDER": "ollama",
+        "OCR_MODEL": "deepseek-ocr"
+      }
+    }
+  }
+}
+```
+
+OpenAI-compatible API:
+
+```json
+{
+  "mcp": {
+    "browserlens": {
+      "type": "local",
+      "command": ["node", "/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "env": {
+        "VISION_PROVIDER": "openai",
+        "VISION_OPENAI_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
+        "VISION_OPENAI_MODEL": "gpt-4o"
+      }
+    }
+  }
+}
+```
+
+Custom provider:
+
+```json
+{
+  "mcp": {
+    "browserlens": {
+      "type": "local",
+      "command": ["node", "/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "env": {
+        "VISION_PROVIDER": "custom",
+        "VISION_CUSTOM_BASE_URL": "https://internal-api.example.com/v1",
+        "VISION_CUSTOM_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
+        "VISION_CUSTOM_MODEL": "your-custom-vision-model"
+      }
+    }
+  }
+}
+```
+
+Where and how to define the environment variable:
+
+- On macOS and Linux, export it in your shell profile, for example `~/.zshrc`:
+
+  ```bash
+  # ~/.zshrc
+  export CUSTOM_INTERPOLATION_ENV_VAR="your-api-key"
+  ```
+
+- The variable must be exported (`export ...`), not just assigned.
+- It applies only to the shell that launches OpenCode. If you launch OpenCode from a terminal, it inherits the profile. If you launch it from the Finder or another GUI (which does not source `~/.zshrc`), the variable will be empty.
+- After editing `~/.zshrc`, open a new terminal (or run `source ~/.zshrc`) and restart OpenCode. Configuration is loaded once at startup and is not hot-reloaded.
+
 If you are using another tested local model, change only the values:
 
 ```json
@@ -254,11 +330,11 @@ If you are using another tested local model, change only the values:
         "OLLAMA_BASE_URL": "http://localhost:11434",
         "VISION_PROVIDER": "custom",
         "VISION_CUSTOM_BASE_URL": "https://internal-api.example.com/v1",
-        "VISION_CUSTOM_API_KEY": "your-api-key",
+        "VISION_CUSTOM_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
         "VISION_CUSTOM_MODEL": "your-custom-vision-model",
         "OCR_PROVIDER": "custom",
         "OCR_CUSTOM_BASE_URL": "https://internal-api.example.com/v1",
-        "OCR_CUSTOM_API_KEY": "your-api-key",
+        "OCR_CUSTOM_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
         "OCR_CUSTOM_MODEL": "your-custom-ocr-or-vision-model"
       }
     }

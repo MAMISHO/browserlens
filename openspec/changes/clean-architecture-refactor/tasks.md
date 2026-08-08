@@ -37,11 +37,11 @@ Commit units: U1 P0+P1 · U2 P2+P3 · U3 P4 · U4 P5 · U5 P6+P7 (switchover; ro
 
 ## Phase 3: browser/
 
-- [ ] 3.1 `browser/tokens.ts` (BrowserService, BrowserDriver) + `domain/models/BrowserModels.ts` (PageSnapshot, ElementInfo.ariaLabel, ScreenshotResult camelCase).
-- [ ] 3.2 `application/DTOs/browser.dto.ts` (10 arg types, camelCase).
-- [ ] 3.3 `application/Services/IBrowserDriverService.ts` (lifecycle + primitives) + `Services/browser.service.ts` (IBrowserService: 11 methods incl. close()).
-- [ ] 3.4 `Services/impl/BrowserServiceImpl.ts` (@injectable; @inject BrowserDriver + ScreenshotStorage + ImageProcessor; logic from playwrightService.ts). (ADR-5)
-- [ ] 3.5 `infra/BrowserDriver.ts` (stateful Playwright impl — SINGLETON) + `browser/index.ts`.
+- [x] 3.1 `browser/tokens.ts` (BrowserService, BrowserDriver) + `domain/models/BrowserModels.ts` (PageSnapshot, ElementInfo.ariaLabel, ScreenshotResult camelCase).
+- [x] 3.2 `application/DTOs/browser.dto.ts` (10 arg types, camelCase).
+- [x] 3.3 `application/Services/IBrowserDriverService.ts` (lifecycle + primitives) + `Services/browser.service.ts` (IBrowserService: 11 methods incl. close()).
+- [x] 3.4 `Services/impl/BrowserServiceImpl.ts` (@injectable; @inject BrowserDriver + ScreenshotStorage + ImageProcessor; logic from playwrightService.ts). (ADR-5)
+- [x] 3.5 `infra/BrowserDriver.ts` (stateful Playwright impl — SINGLETON) + `browser/index.ts`.
 
 ## Phase 4: vision/ + ocr/
 

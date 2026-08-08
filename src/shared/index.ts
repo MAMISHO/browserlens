@@ -1,8 +1,8 @@
 export { SHARED_TOKENS } from "./tokens.js";
-export type { IModelClient, GenerateRequest, ProviderKind } from "./application/Repositories/IModelClient.js";
-export type { IImageProcessor } from "./application/Repositories/IImageProcessor.js";
+export type { IModelClientService, GenerateRequest, ProviderKind } from "./application/Services/IModelClientService.js";
+export type { IImageProcessorService } from "./application/Services/IImageProcessorService.js";
 export type { IScreenshotStorage, ScreenshotStorageOptions } from "./application/Repositories/IScreenshotStorage.js";
-export type { IProcessRunner } from "./application/Repositories/IProcessRunner.js";
+export type { IProcessRunnerService } from "./application/Services/IProcessRunnerService.js";
 export type { ToolResult, StructuredError } from "./application/models/ToolResult.js";
 export type { ProviderSelection } from "./application/models/ProviderSelection.js";
 export { ImageProcessor } from "./infra/ImageProcessor.js";

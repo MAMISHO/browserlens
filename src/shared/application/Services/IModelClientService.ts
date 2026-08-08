@@ -8,7 +8,7 @@ export interface GenerateRequest {
 
 export type ProviderKind = "ollama" | "openai" | "custom";
 
-export interface IModelClient {
+export interface IModelClientService {
   generate(req: GenerateRequest): Promise<{ content: string }>;
   unload?(): Promise<void>;
 }

@@ -1,8 +1,8 @@
 import type { InjectionToken } from "tsyringe";
 
 export const SHARED_TOKENS = {
-  ImageProcessor: "IImageProcessor" as InjectionToken<import("./application/Repositories/IImageProcessor.js").IImageProcessor>,
+  ImageProcessor: "IImageProcessorService" as InjectionToken<import("./application/Services/IImageProcessorService.js").IImageProcessorService>,
   ScreenshotStorage: "IScreenshotStorage" as InjectionToken<import("./application/Repositories/IScreenshotStorage.js").IScreenshotStorage>,
-  ModelClient: "IModelClient" as InjectionToken<import("./application/Repositories/IModelClient.js").IModelClient>,
-  ProcessRunner: "IProcessRunner" as InjectionToken<import("./application/Repositories/IProcessRunner.js").IProcessRunner>,
+  ModelClient: "IModelClientService" as InjectionToken<import("./application/Services/IModelClientService.js").IModelClientService>,
+  ProcessRunner: "IProcessRunnerService" as InjectionToken<import("./application/Services/IProcessRunnerService.js").IProcessRunnerService>,
 } as const;

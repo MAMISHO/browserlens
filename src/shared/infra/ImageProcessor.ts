@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import sharp from "sharp";
-import type { IImageProcessor } from "../application/Repositories/IImageProcessor.js";
+import type { IImageProcessorService } from "../application/Services/IImageProcessorService.js";
 
-export class ImageProcessor implements IImageProcessor {
+export class ImageProcessor implements IImageProcessorService {
   async imageToOptimizedBase64(imagePath: string): Promise<string> {
     const image = sharp(imagePath, { failOn: "none" });
     const metadata = await image.metadata();

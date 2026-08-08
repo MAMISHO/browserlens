@@ -1,4 +1,4 @@
-import type { IModelClient, ProviderKind } from "../application/Repositories/IModelClient.js";
+import type { IModelClientService, ProviderKind } from "../application/Services/IModelClientService.js";
 import type { ProviderSelection } from "../application/models/ProviderSelection.js";
 
 export function isEnabled(value: string | undefined): boolean {
@@ -22,7 +22,7 @@ export function selectedProvider(kind: "vision" | "ocr"): ProviderKind {
   return "ollama";
 }
 
-export function createVisionProvider(client: IModelClient): ProviderSelection {
+export function createVisionProvider(client: IModelClientService): ProviderSelection {
   const provider = selectedProvider("vision");
   if (provider === "openai") {
     return {
@@ -47,7 +47,7 @@ export function createVisionProvider(client: IModelClient): ProviderSelection {
   };
 }
 
-export function createOcrProvider(client: IModelClient): ProviderSelection {
+export function createOcrProvider(client: IModelClientService): ProviderSelection {
   const provider = selectedProvider("ocr");
   if (provider === "openai") {
     return {

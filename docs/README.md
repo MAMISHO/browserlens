@@ -4,7 +4,7 @@
 
 ## Planes
 
-- `plan/refactor-clean-architecture.md` — Plan maestro del refactor hacia clean architecture + DI. Estado: en ejecución (rama `feat/clean-architecture`).
+- `plan/refactor-clean-architecture.md` — Plan maestro del refactor hacia clean architecture + DI. Estado: implementado + verificado (2026-08-09).
 
 ## Features
 
@@ -15,6 +15,7 @@
 - `notes/DI-tokens-esbuild.md` — Gotcha `emitDecoratorMetadata` con esbuild y la solución con tokens explícitos.
 - `notes/automapper-v9.md` — Decisión del patrón de mappers (@automapper v9, `pojos()` + `namingConventions`).
 - `notes/sdd-workflow.md` — Cómo usamos SDD en este repo: fases, artefactos y delegación de subagentes.
+- `notes/command-code-compat.md` — Compatibilidad MCP multi-cliente (Command Code) + hallazgo del entrypoint stale (`dist/mcpServer.js` → `dist/main.js`).
 
 ## Arquitectura
 

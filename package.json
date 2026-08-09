@@ -20,6 +20,7 @@
     "start": "node dist/main.js",
     "dev": "tsx src/main.ts",
     "typecheck": "tsc --noEmit",
+    "smoke": "npm run build && node scripts/smoke-mcp.mjs",
     "prepack": "npm run build"
   },
   "keywords": [

@@ -206,7 +206,7 @@ Point your MCP client at the built stdio server. Configure the local Ollama endp
   "mcp": {
     "browserlens": {
       "command": "node",
-      "args": ["/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "args": ["/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434",
         "VISION_PROVIDER": "ollama",
@@ -229,7 +229,7 @@ For OpenCode, put the local model configuration in the MCP server entry. The exa
   "mcp": {
     "browserlens": {
       "command": "node",
-      "args": ["/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "args": ["/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434",
         "VISION_PROVIDER": "ollama",
@@ -255,7 +255,7 @@ Ollama (no API key required):
   "mcp": {
     "browserlens": {
       "type": "local",
-      "command": ["node", "/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "command": ["node", "/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434",
         "VISION_PROVIDER": "ollama",
@@ -275,7 +275,7 @@ OpenAI-compatible API:
   "mcp": {
     "browserlens": {
       "type": "local",
-      "command": ["node", "/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "command": ["node", "/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "VISION_PROVIDER": "openai",
         "VISION_OPENAI_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
@@ -293,7 +293,7 @@ Custom provider:
   "mcp": {
     "browserlens": {
       "type": "local",
-      "command": ["node", "/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "command": ["node", "/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "VISION_PROVIDER": "custom",
         "VISION_CUSTOM_BASE_URL": "https://internal-api.example.com/v1",
@@ -325,7 +325,7 @@ If you are using another tested local model, change only the values:
   "mcp": {
     "browserlens": {
       "command": "node",
-      "args": ["/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "args": ["/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434",
         "VISION_PROVIDER": "custom",
@@ -379,6 +379,39 @@ This pattern also applies to other MCP clients that support environment variable
   }
 }
 ```
+
+### Command Code Example
+
+For Command Code, the simplest option is a project-scoped `.mcp.json` at the project root (checked into git and shared with the team):
+
+```json
+{
+  "mcpServers": {
+    "browserlens": {
+      "command": "node",
+      "args": ["/absolute/path/to/browserlens/dist/main.js"],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "VISION_MODEL": "qwen3-vl:8b",
+        "OCR_MODEL": "deepseek-ocr"
+      }
+    }
+  }
+}
+```
+
+Or add it with the CLI, which is equivalent and writes the same project-scoped config:
+
+```bash
+cmd mcp add --scope project browserlens -- node /absolute/path/to/browserlens/dist/main.js \
+  --env OLLAMA_BASE_URL=http://localhost:11434 \
+  --env VISION_MODEL=qwen3-vl:8b \
+  --env OCR_MODEL=deepseek-ocr
+```
+
+Then inside a Command Code session, use `/mcp` to see connection status (green = connected) and available tools. BrowserLens tools appear as `mcp__browserlens__<tool>`. For a personal setup that follows you across projects, use `--scope user` instead.
+
+> Command Code note: use `${VAR}` (resolved from the Command Code process environment at runtime) if you want to interpolate environment variables. The `{env:VAR}` syntax shown in the OpenCode examples above is OpenCode-specific and does not apply to Command Code.
 
 ## Configuration
 
@@ -699,7 +732,7 @@ npm run typecheck
 npm run build
 ```
 
-`npm run build` performs a TypeScript compile and then bundles the MCP entrypoint with esbuild into a minified `dist/mcpServer.js`. Dependencies remain external so native packages such as `sharp` and Playwright stay installable and portable.
+`npm run build` performs a TypeScript compile and then bundles the MCP entrypoint with esbuild into a minified `dist/main.js`. Dependencies remain external so native packages such as `sharp` and Playwright stay installable and portable.
 
 Useful checks before opening a pull request:
 

@@ -9,6 +9,7 @@
 ## Features
 
 - `features/clean-architecture-refactor.md` — Feature SDD del refactor: alcance, criterios de aceptación y estado del pipeline.
+- `openspec/specs/command-code-compat/spec.md` — Spec de compatibilidad con Command Code (docs + smoke test + verificación real). Change archivado en `openspec/changes/archive/2026-08-09-command-code-compat/`.
 
 ## Notas de desarrollo
 

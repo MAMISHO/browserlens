@@ -1,22 +1,26 @@
 {
   "name": "browserlens",
   "version": "0.1.0",
-  "description": "Vision-focused MCP server for browser automation, timestamped screenshots, visual analysis, and OCR through local Ollama models.",
+  "description": "Vision-focused MCP server for browser automation, timestamped screenshots, visual analysis, OCR, and image-to-Markdown through Ollama, OpenAI, or custom providers.",
   "type": "module",
   "bin": {
-    "browserlens": "./dist/mcpServer.js"
+    "browserlens": "./dist/main.js"
   },
   "files": [
     "dist",
     "README.md",
+    "CONTRIBUTING.md",
+    "docs",
+    "browserlens-config.example.json",
     "LICENSE"
   ],
   "scripts": {
     "build": "npm run clean && tsc --emitDeclarationOnly && node scripts/bundle.mjs",
     "clean": "rm -rf dist",
-    "start": "node dist/mcpServer.js",
-    "dev": "tsx src/mcpServer.ts",
+    "start": "node dist/main.js",
+    "dev": "tsx src/main.ts",
     "typecheck": "tsc --noEmit",
+    "smoke": "npm run build && node scripts/smoke-mcp.mjs",
     "prepack": "npm run build"
   },
   "keywords": [
@@ -30,16 +34,21 @@
   "license": "MIT",
   "author": "",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.13.0",
-    "playwright": "^1.52.0",
-    "sharp": "^0.33.5",
-    "zod": "^3.24.1"
+    "@automapper/core": "^9.0.2",
+    "@automapper/pojos": "^9.0.2",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "openai": "^7.4.0",
+    "playwright": "^1.62.1",
+    "reflect-metadata": "^0.2.2",
+    "sharp": "^0.35.3",
+    "tsyringe": "^4.10.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
-    "esbuild": "^0.28.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "@types/node": "^24.13.3",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.11",
+    "typescript": "^6.0.3"
   },
   "engines": {
     "node": ">=20"

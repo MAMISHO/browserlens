@@ -1,0 +1,54 @@
+# openspec/config.yaml — browserlens SDD configuration
+schema: spec-driven
+
+context: |
+  Tech stack: Node 26 (engines >=20), native TypeScript ESM ("type": "module", NodeNext),
+  MCP server (@modelcontextprotocol/sdk ^1.13.0), Playwright, sharp, openai, zod.
+  Architecture: flat src/ monolith (12 files, 1823 lines) — planned refactor to clean
+  architecture by slices (browser, vision, ocr, execution, mcp, shared) with tsyringe DI
+  (explicit InjectionToken + @inject), @automapper v9 pojos() mappers, composition root
+  src/main.ts + src/container.ts. Branch: feat/clean-architecture.
+  Build: esbuild single-file bundle (scripts/bundle.mjs, packages external) + tsc
+  --emitDeclarationOnly. Scripts: build, typecheck, dev (tsx), start.
+  Testing: NONE — no test runner, no test files, no coverage tool. strict_tdd: false.
+  Style: no linter/formatter configured; follow existing code patterns.
+  docs/ is already in use (README, plan/, features/, notes/) — do NOT modify.
+
+testing:
+  strict_tdd: false
+  runner: none
+  unit: false
+  integration: false
+  e2e: false
+  e2e_note: "Playwright is a RUNTIME dependency for browser automation, not a test harness."
+  coverage: false
+  coverage_command: ""
+  typecheck: "npm run typecheck"
+  lint: none
+  format: none
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - State which slices are touched and the DI/mapper impact
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns
+    tdd: false
+    test_command: ""
+    - Do not introduce a test runner unless a change explicitly adds one
+  verify:
+    test_command: ""
+    build_command: "npm run build"
+    coverage_threshold: 0
+    - With no tests, verify via typecheck (npm run typecheck) and build
+  archive:
+    - Warn before merging destructive deltas

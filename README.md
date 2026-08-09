@@ -2,7 +2,7 @@
 
 BrowserLens is a production-oriented Model Context Protocol server that gives AI agents browser control and local visual understanding.
 
-It solves a practical gap in agentic browser work: many browser-control MCPs need screenshots for verification, but text-only agents cannot consume those screenshots directly, and multimodal agents can burn many tokens when every visual check is sent to the main model. BrowserLens lets agents navigate pages, inspect DOM, take timestamped screenshots, compare rendered images, extract OCR text, and convert images to Markdown through local Ollama models. The main agent receives compact JSON or Markdown, not raw image payloads.
+It solves a practical gap in agentic browser work: many browser-control MCPs need screenshots for verification, but text-only agents cannot consume those screenshots directly, and multimodal agents can burn many tokens when every visual check is sent to the main model. BrowserLens lets agents navigate pages, inspect DOM, take timestamped screenshots, compare rendered images, extract OCR text, and convert images to Markdown through Ollama or OpenAI-compatible providers. The main agent receives compact JSON or Markdown, not raw image payloads.
 
 This project has been tested successfully in workflows where a fast text-only model, such as **DeepSeek V4 Flash** or the local Gemma setup used during development, acts as the main agent and BrowserLens delegates visual interpretation to local Ollama models.
 
@@ -13,7 +13,7 @@ It provides:
 - runtime switching between headless automation and an interactive visible browser for login/manual intervention
 - timestamped browser screenshots stored in user-writable per-project directories
 - visual analysis and image comparison through Ollama multimodal models
-- OCR and image-to-Markdown extraction through Ollama
+- OCR and image-to-Markdown extraction through Ollama, OpenAI, or custom Chat Completions-compatible services
 
 BrowserLens is a capability layer only. It does not include autonomous loops or agent reasoning.
 
@@ -29,7 +29,7 @@ For text-only models:
 
 - it prevents the browser verification flow from breaking when a task requires screenshots
 - the model can control the browser and request visual checks without receiving images
-- local vision/OCR models translate screenshots into actionable text, JSON, or Markdown
+- local, cloud, or custom vision/OCR services translate screenshots into actionable text, JSON, or Markdown
 
 For multimodal models:
 
@@ -47,8 +47,8 @@ flowchart LR
   B --> C["Playwright browser control<br/>browser MCP-style workflow"]
   C --> D["Rendered page"]
   B --> E["Timestamped screenshot<br/>user data directory"]
-  E --> F["Local Ollama vision model<br/>qwen3-vl:8b"]
-  E --> G["Local Ollama OCR model<br/>deepseek-ocr"]
+  E --> F["Vision provider<br/>Ollama, OpenAI, or custom"]
+  E --> G["OCR provider<br/>Ollama, OpenAI, or custom"]
   F --> H["Strict JSON visual report"]
   G --> I["Structured OCR text<br/>or Markdown"]
   H --> A
@@ -92,15 +92,17 @@ There are two model roles:
 
 - Main agent: **DeepSeek V4 Flash**, Gemma, or another strong text-only coding model
 - Browser control: BrowserLens through MCP
-- Visual analysis: a local Qwen vision model through Ollama
-- OCR/Markdown extraction: a local OCR model through Ollama
+- Visual analysis: a local Qwen vision model through Ollama, OpenAI, or a custom Chat Completions-compatible endpoint
+- OCR/Markdown extraction: a local OCR model through Ollama, OpenAI, or a custom Chat Completions-compatible endpoint
 
 The package defaults are:
 
 | Role | Environment variable | Default |
 | --- | --- | --- |
 | Ollama endpoint | `OLLAMA_BASE_URL` | `http://localhost:11434` |
+| Vision provider | `VISION_PROVIDER` | `ollama` |
 | Visual analysis/comparison | `VISION_MODEL` | `qwen3-vl:8b` |
+| OCR provider | `OCR_PROVIDER` | `ollama` |
 | OCR / Markdown extraction | `OCR_MODEL` | `deepseek-ocr` |
 
 The development setup that has worked well is:
@@ -115,8 +117,40 @@ Default environment:
 
 ```bash
 OLLAMA_BASE_URL=http://localhost:11434
+VISION_PROVIDER=ollama
 VISION_MODEL=qwen3-vl:8b
+OCR_PROVIDER=ollama
 OCR_MODEL=deepseek-ocr
+```
+
+Provider values are `ollama`, `openai`, or `custom`.
+
+Use `openai` for the public OpenAI API:
+
+```bash
+VISION_PROVIDER=openai
+VISION_OPENAI_API_KEY=...
+VISION_OPENAI_MODEL=gpt-4o
+```
+
+Use `custom` for an internal, private, local gateway, or third-party service that exposes a Chat Completions-compatible API:
+
+```bash
+VISION_PROVIDER=custom
+VISION_CUSTOM_BASE_URL=https://internal-api.example.com/v1
+VISION_CUSTOM_API_KEY=...
+VISION_CUSTOM_MODEL=your-custom-vision-model
+```
+
+OCR can be configured independently. For example, use Ollama for vision and a custom OCR provider:
+
+```bash
+VISION_PROVIDER=ollama
+VISION_MODEL=qwen3-vl:8b
+OCR_PROVIDER=custom
+OCR_CUSTOM_BASE_URL=https://internal-api.example.com/v1
+OCR_CUSTOM_API_KEY=...
+OCR_CUSTOM_MODEL=your-custom-ocr-or-vision-model
 ```
 
 Pull the local models before using the visual tools:
@@ -172,10 +206,12 @@ Point your MCP client at the built stdio server. Configure the local Ollama endp
   "mcp": {
     "browserlens": {
       "command": "node",
-      "args": ["/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "args": ["/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434",
+        "VISION_PROVIDER": "ollama",
         "VISION_MODEL": "qwen3-vl:8b",
+        "OCR_PROVIDER": "ollama",
         "OCR_MODEL": "deepseek-ocr",
         "BROWSERLENS_SCREENSHOT_DIR": "/custom/writable/path"
       }
@@ -193,16 +229,94 @@ For OpenCode, put the local model configuration in the MCP server entry. The exa
   "mcp": {
     "browserlens": {
       "command": "node",
-      "args": ["/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "args": ["/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434",
+        "VISION_PROVIDER": "ollama",
         "VISION_MODEL": "qwen3-vl:8b",
+        "OCR_PROVIDER": "ollama",
         "OCR_MODEL": "deepseek-ocr"
       }
     }
   }
 }
 ```
+
+#### Using environment variables for API keys
+
+For OpenCode, the `env` block is the single source of truth for the server process. Instead of hardcoding an API key in `opencode.json`, use the `{env:VAR}` interpolation syntax. OpenCode resolves the value from its own environment when it loads the config, and the MCP server receives only the resolved token. The server never sees the environment variable name, so you can use any name you like in your shell.
+
+`{env:VAR}` is OpenCode-specific syntax (not the shell-style `${VAR}`) and is resolved by OpenCode itself, so the value must exist in the environment that launches OpenCode.
+
+Ollama (no API key required):
+
+```json
+{
+  "mcp": {
+    "browserlens": {
+      "type": "local",
+      "command": ["node", "/absolute/path/to/browserlens/dist/main.js"],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "VISION_PROVIDER": "ollama",
+        "VISION_MODEL": "qwen3-vl:8b",
+        "OCR_PROVIDER": "ollama",
+        "OCR_MODEL": "deepseek-ocr"
+      }
+    }
+  }
+}
+```
+
+OpenAI-compatible API:
+
+```json
+{
+  "mcp": {
+    "browserlens": {
+      "type": "local",
+      "command": ["node", "/absolute/path/to/browserlens/dist/main.js"],
+      "env": {
+        "VISION_PROVIDER": "openai",
+        "VISION_OPENAI_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
+        "VISION_OPENAI_MODEL": "gpt-4o"
+      }
+    }
+  }
+}
+```
+
+Custom provider:
+
+```json
+{
+  "mcp": {
+    "browserlens": {
+      "type": "local",
+      "command": ["node", "/absolute/path/to/browserlens/dist/main.js"],
+      "env": {
+        "VISION_PROVIDER": "custom",
+        "VISION_CUSTOM_BASE_URL": "https://internal-api.example.com/v1",
+        "VISION_CUSTOM_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
+        "VISION_CUSTOM_MODEL": "your-custom-vision-model"
+      }
+    }
+  }
+}
+```
+
+Where and how to define the environment variable:
+
+- On macOS and Linux, export it in your shell profile, for example `~/.zshrc`:
+
+  ```bash
+  # ~/.zshrc
+  export CUSTOM_INTERPOLATION_ENV_VAR="your-api-key"
+  ```
+
+- The variable must be exported (`export ...`), not just assigned.
+- It applies only to the shell that launches OpenCode. If you launch OpenCode from a terminal, it inherits the profile. If you launch it from the Finder or another GUI (which does not source `~/.zshrc`), the variable will be empty.
+- After editing `~/.zshrc`, open a new terminal (or run `source ~/.zshrc`) and restart OpenCode. Configuration is loaded once at startup and is not hot-reloaded.
 
 If you are using another tested local model, change only the values:
 
@@ -211,11 +325,17 @@ If you are using another tested local model, change only the values:
   "mcp": {
     "browserlens": {
       "command": "node",
-      "args": ["/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "args": ["/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434",
-        "VISION_MODEL": "your-local-qwen-vision-model",
-        "OCR_MODEL": "your-local-ocr-model"
+        "VISION_PROVIDER": "custom",
+        "VISION_CUSTOM_BASE_URL": "https://internal-api.example.com/v1",
+        "VISION_CUSTOM_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
+        "VISION_CUSTOM_MODEL": "your-custom-vision-model",
+        "OCR_PROVIDER": "custom",
+        "OCR_CUSTOM_BASE_URL": "https://internal-api.example.com/v1",
+        "OCR_CUSTOM_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
+        "OCR_CUSTOM_MODEL": "your-custom-ocr-or-vision-model"
       }
     }
   }
@@ -260,11 +380,46 @@ This pattern also applies to other MCP clients that support environment variable
 }
 ```
 
+### Command Code Example
+
+For Command Code, the simplest option is a project-scoped `.mcp.json` at the project root (checked into git and shared with the team):
+
+```json
+{
+  "mcpServers": {
+    "browserlens": {
+      "command": "node",
+      "args": ["/absolute/path/to/browserlens/dist/main.js"],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "VISION_MODEL": "qwen3-vl:8b",
+        "OCR_MODEL": "deepseek-ocr"
+      }
+    }
+  }
+}
+```
+
+Or add it with the CLI, which is equivalent and writes the same project-scoped config:
+
+```bash
+cmd mcp add --scope project browserlens -- node /absolute/path/to/browserlens/dist/main.js \
+  --env OLLAMA_BASE_URL=http://localhost:11434 \
+  --env VISION_MODEL=qwen3-vl:8b \
+  --env OCR_MODEL=deepseek-ocr
+```
+
+Then inside a Command Code session, use `/mcp` to see connection status (green = connected) and available tools. BrowserLens tools appear as `mcp__browserlens__<tool>`. For a personal setup that follows you across projects, use `--scope user` instead.
+
+> Command Code note: use `${VAR}` (resolved from the Command Code process environment at runtime) if you want to interpolate environment variables. The `{env:VAR}` syntax shown in the OpenCode examples above is OpenCode-specific and does not apply to Command Code.
+
 ## Configuration
 
 ```bash
 OLLAMA_BASE_URL=http://localhost:11434
+VISION_PROVIDER=ollama
 VISION_MODEL=qwen3-vl:8b
+OCR_PROVIDER=ollama
 OCR_MODEL=deepseek-ocr
 BROWSERLENS_SCREENSHOT_DIR=/custom/writable/path
 BROWSERLENS_HEADLESS=true
@@ -577,7 +732,7 @@ npm run typecheck
 npm run build
 ```
 
-`npm run build` performs a TypeScript compile and then bundles the MCP entrypoint with esbuild into a minified `dist/mcpServer.js`. Dependencies remain external so native packages such as `sharp` and Playwright stay installable and portable.
+`npm run build` performs a TypeScript compile and then bundles the MCP entrypoint with esbuild into a minified `dist/main.js`. Dependencies remain external so native packages such as `sharp` and Playwright stay installable and portable.
 
 Useful checks before opening a pull request:
 

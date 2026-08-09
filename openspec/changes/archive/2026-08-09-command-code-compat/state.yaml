@@ -1,0 +1,22 @@
+change: command-code-compat
+phase: archived
+artifact_store: hybrid
+delivery_strategy: work-unit-commits-no-pr
+commit_units:
+  - unit_1: "P0-P3 SDD artifacts"
+  - unit_2: "P4 apply: smoke test + docs"
+  - unit_3: "P5 verify: typecheck/build/smoke + Command Code real"
+artifacts:
+  init: true
+  proposal: true
+  specs: true
+  design: true
+  tasks: true
+tasks_progress:
+  completed: [0.1-5.6]
+  pending: []
+last_updated: 2026-08-09
+next: none
+archived_at: 2026-08-09
+verify_result: PASS (5.1 typecheck, 5.2 build, 5.3 smoke scripted, 5.4 Command Code real: execute_code + navigate + screenshot + analyze_image with local qwen3-vl:8b)
+archive_reference: openspec/changes/archive/2026-08-09-command-code-compat/

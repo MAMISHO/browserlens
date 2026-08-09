@@ -1,0 +1,14 @@
+{
+  "visionProvider": "ollama",
+  "visionModel": "qwen3-vl:8b",
+  "ocrProvider": "ollama",
+  "ocrModel": "deepseek-ocr",
+  "ollamaBaseUrl": "http://localhost:11434",
+  "openAiApiKey": "YOUR_OPENAI_API_KEY",
+  "openAiModel": "gpt-4o",
+  "customProviderBaseUrl": "https://internal-api.example.com/v1",
+  "customProviderApiKey": "YOUR_CUSTOM_PROVIDER_API_KEY",
+  "customProviderModel": "your-custom-vision-model",
+  "browserlensHeadless": true,
+  "browserlensScreenshotDir": "/tmp/browserlens/screenshots"
+}

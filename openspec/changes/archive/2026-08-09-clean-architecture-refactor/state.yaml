@@ -1,0 +1,25 @@
+change: clean-architecture-refactor
+phase: archived
+artifact_store: hybrid
+delivery_strategy: work-unit-commits-no-pr
+commit_units:
+  - unit_1: "P0+P1 shared/foundation"
+  - unit_2: "P2+P3 execution/browser"
+  - unit_3: "P4 vision/ocr"
+  - unit_4: "P5 mcp"
+  - unit_5: "P6+P7 composition root + build"
+  - unit_6: "P8 verification"
+artifacts:
+  init: true
+  proposal: true
+  specs: true
+  design: true
+  tasks: true
+tasks_progress:
+  completed: [0.1-8.3]
+  pending: []
+last_updated: 2026-08-09
+next: none
+archived_at: 2026-08-09
+verify_result: PASS (Engram #194 sdd/clean-architecture-refactor/verify-result — 8.1 typecheck, 8.2 build+boot, 8.3 smoke MCP)
+archive_reference: openspec/changes/archive/2026-08-09-clean-architecture-refactor/

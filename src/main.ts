@@ -11,7 +11,7 @@ import { SHARED_TOKENS } from "./shared/tokens.js";
 const controller = container.resolve(MCP_TOKENS.McpController);
 
 const server = new Server(
-  { name: "browserlens", version: "0.1.0" },
+  { name: "browserlens", version: "0.2.0" },
   { capabilities: { tools: {} } }
 );
 

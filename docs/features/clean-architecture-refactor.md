@@ -1,6 +1,6 @@
 # Feature: Refactor a Clean Architecture + DI
 
-> Estado del pipeline SDD: propuesta/spec/design/tasks pendientes → apply → verify → archive
+> Estado del pipeline SDD: implementado + verificado (PASS) + archivado (2026-08-09) → apply → verify → archive ✅
 > Rama: `feat/clean-architecture`
 
 ## Resumen
@@ -25,12 +25,12 @@ Refactorizar la estructura interna de BrowserLens hacia clean architecture por s
 
 ## Criterios de aceptación
 
-- [ ] `npm run typecheck` pasa sin errores.
-- [ ] `npm run build` genera `dist/mcpServer.js` correctamente.
-- [ ] Las tools MCP siguen funcionando end-to-end (navigate, screenshot, analyze, extract, execute).
-- [ ] Contrato MCP idéntico (mismos tool names y schemas).
-- [ ] DI resuelve en runtime (no solo en types): el server arranca y responde.
-- [ ] Singleton stateful correcto (BrowserDriver, ModelClient persisten por sesión).
+- [x] `npm run typecheck` pasa sin errores.
+- [x] `npm run build` genera `dist/main.js` correctamente.
+- [x] Las tools MCP siguen funcionando end-to-end (navigate, screenshot, analyze, extract, execute).
+- [x] Contrato MCP idéntico (mismos tool names y schemas).
+- [x] DI resuelve en runtime (no solo en types): el server arranca y responde.
+- [x] Singleton stateful correcto (BrowserDriver, ModelClient persisten por sesión).
 
 ## Fuentes de decisión
 

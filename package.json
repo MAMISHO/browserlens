@@ -1,6 +1,6 @@
 {
   "name": "browserlens",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Vision-focused MCP server for browser automation, timestamped screenshots, visual analysis, OCR, and image-to-Markdown through Ollama, OpenAI, or custom providers.",
   "type": "module",
   "bin": {

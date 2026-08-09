@@ -6,3 +6,4 @@ coverage/
 *.log
 screenshots/
 .atl/
+/.commandcode

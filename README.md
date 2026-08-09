@@ -184,10 +184,14 @@ OCR_MODEL=deepseek-ocr
 Install the latest published build directly from GitHub Releases as a local dependency:
 
 ```bash
+# Latest release
 npm install https://github.com/MAMISHO/browserlens/releases/latest/download/browserlens.tgz
+
+# Pin a specific version
+npm install https://github.com/MAMISHO/browserlens/releases/download/v0.2.0/browserlens.tgz
 ```
 
-This installs the prebuilt MCP server (`dist/main.js`), its `browserlens` bin, and all runtime dependencies. The `latest` URL always points to the most recent release; pin a specific version by using `https://github.com/MAMISHO/browserlens/releases/download/v0.2.0/browserlens.tgz`.
+The `latest` URL always resolves to the most recent release. To install a specific version, use the pinned URL with the exact tag (e.g. `v0.2.0`). Each release publishes the same stable asset name `browserlens.tgz`.
 
 Then add BrowserLens to your MCP client (see [MCP Configuration](#mcp-configuration)).
 

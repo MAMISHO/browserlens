@@ -55,13 +55,13 @@ Commit units: U1 P0+P1 · U2 P2+P3 · U3 P4 · U4 P5 · U5 P6+P7 (switchover; ro
 
 ## Phase 5: mcp/
 
-- [ ] 5.1 `mcp/tokens.ts` (Mapper: InjectionToken\<Mapper\>, McpController).
-- [ ] 5.2 `mcp/schemas.ts`: 15 zod schemas VERBATIM snake_case from mcpServer.ts. Accept: diff zero. (ADR-8, MCP Contract)
-- [ ] 5.3 `mcp/toolDefinitions.ts`: 15 {name, description, inputSchema} VERBATIM from mcpServer.ts ListTools. Accept: diff zero. (ADR-8)
-- [ ] 5.4 `mcp/formatter.ts`: json(value, isError=false) → CallToolResult (preserved semantics).
-- [ ] 5.5 `mcp/mappers/wireMetadata.ts` (PojosMetadataMap.create all wire⇄internal pairs, nested shapes) + `wireMapper.ts` (createWireMapper: pojos, snake⇄camel, createMap per pair). (ADR-3/4/10)
-- [ ] 5.6 `mcp/mappers/{browser,vision,ocr,execute}.mapper.ts`: per-tool wire fns; StructuredError short-circuit. (ADR-4)
-- [ ] 5.7 `mcp/controller.ts`: McpController (@injectable; 4 services + Mapper; listTools → TOOL_DEFINITIONS; callTool: parse → map → service → map → json; unknown-tool error) + `mcp/index.ts`. Deps: 5.2–5.6. (ADR-6, DI Wiring)
+- [x] 5.1 `mcp/tokens.ts` (Mapper: InjectionToken\<Mapper\>, McpController).
+- [x] 5.2 `mcp/schemas.ts`: 15 zod schemas VERBATIM snake_case from mcpServer.ts. Accept: diff zero. (ADR-8, MCP Contract)
+- [x] 5.3 `mcp/toolDefinitions.ts`: 15 {name, description, inputSchema} VERBATIM from mcpServer.ts ListTools. Accept: diff zero. (ADR-8)
+- [x] 5.4 `mcp/formatter.ts`: json(value, isError=false) → CallToolResult (preserved semantics).
+- [x] 5.5 `mcp/mappers/wireMetadata.ts` (PojosMetadataMap.create all wire⇄internal pairs, nested shapes) + `wireMapper.ts` (createWireMapper: pojos, snake⇄camel, createMap per pair). (ADR-3/4/10)
+- [x] 5.6 `mcp/mappers/{browser,vision,ocr,execute}.mapper.ts`: per-tool wire fns; StructuredError short-circuit. (ADR-4)
+- [x] 5.7 `mcp/controller.ts`: McpController (@injectable; 4 services + Mapper; listTools → TOOL_DEFINITIONS; callTool: parse → map → service → map → json; unknown-tool error) + `mcp/index.ts`. Deps: 5.2–5.6. (ADR-6, DI Wiring)
 
 ## Phase 6: Composition root
 

@@ -179,6 +179,20 @@ OCR_MODEL=deepseek-ocr
 
 ## Installation
 
+### From GitHub Releases (recommended)
+
+Install the latest published build directly from GitHub Releases as a local dependency:
+
+```bash
+npm install https://github.com/MAMISHO/browserlens/releases/latest/download/browserlens.tgz
+```
+
+This installs the prebuilt MCP server (`dist/main.js`), its `browserlens` bin, and all runtime dependencies. The `latest` URL always points to the most recent release; pin a specific version by using `https://github.com/MAMISHO/browserlens/releases/download/v0.2.0/browserlens.tgz`.
+
+Then add BrowserLens to your MCP client (see [MCP Configuration](#mcp-configuration)).
+
+### From source (development)
+
 ```bash
 npm install
 npx playwright install chromium
@@ -199,26 +213,50 @@ npm run dev
 
 ## MCP Configuration
 
-Point your MCP client at the built stdio server. Configure the local Ollama endpoint and models in the MCP entry so each user can choose their own local setup without changing BrowserLens code:
+BrowserLens is a stdio MCP server. Point your MCP client at the built server and configure the local Ollama endpoint and models in the MCP entry so each user can choose their own local setup without changing BrowserLens code.
+
+Generic entry (works for any client that supports stdio MCP servers and per-server env):
 
 ```json
 {
-  "mcp": {
+  "mcpServers": {
     "browserlens": {
-      "command": "node",
-      "args": ["/absolute/path/to/browserlens/dist/main.js"],
+      "command": "npx",
+      "args": ["browserlens"],
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434",
         "VISION_PROVIDER": "ollama",
         "VISION_MODEL": "qwen3-vl:8b",
         "OCR_PROVIDER": "ollama",
-        "OCR_MODEL": "deepseek-ocr",
-        "BROWSERLENS_SCREENSHOT_DIR": "/custom/writable/path"
+        "OCR_MODEL": "deepseek-ocr"
       }
     }
   }
 }
 ```
+
+If you installed the tarball in a project, point directly at the installed server:
+
+```json
+{
+  "mcpServers": {
+    "browserlens": {
+      "command": "npx",
+      "args": ["browserlens"],
+      "cwd": "/path/to/your/project",
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "VISION_PROVIDER": "ollama",
+        "VISION_MODEL": "qwen3-vl:8b",
+        "OCR_PROVIDER": "ollama",
+        "OCR_MODEL": "deepseek-ocr"
+      }
+    }
+  }
+}
+```
+
+If `npx browserlens` is not on the client's PATH, point at the installed file directly (`node node_modules/browserlens/dist/main.js` relative to the project that ran `npm install`).
 
 ### OpenCode Example
 

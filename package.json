@@ -4,7 +4,7 @@
   "description": "Vision-focused MCP server for browser automation, timestamped screenshots, visual analysis, OCR, and image-to-Markdown through Ollama, OpenAI, or custom providers.",
   "type": "module",
   "bin": {
-    "browserlens": "./dist/mcpServer.js"
+    "browserlens": "./dist/main.js"
   },
   "files": [
     "dist",
@@ -17,8 +17,8 @@
   "scripts": {
     "build": "npm run clean && tsc --emitDeclarationOnly && node scripts/bundle.mjs",
     "clean": "rm -rf dist",
-    "start": "node dist/mcpServer.js",
-    "dev": "tsx src/mcpServer.ts",
+    "start": "node dist/main.js",
+    "dev": "tsx src/main.ts",
     "typecheck": "tsc --noEmit",
     "prepack": "npm run build"
   },

@@ -65,8 +65,8 @@ Commit units: U1 P0+P1 · U2 P2+P3 · U3 P4 · U4 P5 · U5 P6+P7 (switchover; ro
 
 ## Phase 6: Composition root
 
-- [ ] 6.1 `container.ts`: export container; order shared infra → ModelClient (OllamaClientImpl, Singleton) → Vision/OcrModelConfig (useFactory → createProvider(resolve(ModelClient))) → BrowserDriver (Singleton) + BrowserService → vision/ocr/execution services → Mapper (useFactory, Singleton) → McpController. (ADR-2/5/9/10)
-- [ ] 6.2 `main.ts`: reflect-metadata FIRST; resolve McpController (fail-fast); Server("browserlens") + ListTools/CallTool → controller; stdio connect; SIGINT/SIGTERM: browser.close() + modelClient.unload?.() + exit. (ADR-6, DI Wiring)
+- [x] 6.1 `container.ts`: export container; order shared infra → ModelClient (OllamaClientImpl, Singleton) → Vision/OcrModelConfig (useFactory → createProvider(resolve(ModelClient))) → BrowserDriver (Singleton) + BrowserService → vision/ocr/execution services → Mapper (useFactory, Singleton) → McpController. (ADR-2/5/9/10)
+- [x] 6.2 `main.ts`: reflect-metadata FIRST; resolve McpController (fail-fast); Server("browserlens") + ListTools/CallTool → controller; stdio connect; SIGINT/SIGTERM: browser.close() + modelClient.unload?.() + exit. (ADR-6, DI Wiring)
 
 ## Phase 7: Entrypoint/build + cleanup
 

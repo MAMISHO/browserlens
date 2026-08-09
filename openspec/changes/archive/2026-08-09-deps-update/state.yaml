@@ -1,0 +1,23 @@
+change: deps-update
+phase: archived
+artifact_store: hybrid
+delivery_strategy: work-unit-commits-no-pr
+commit_units:
+  - unit_1: "P0-P3 SDD artifacts"
+  - unit_2: "P4 apply: npm install deps"
+  - unit_3: "P5 verify: typecheck/build/smoke + smoke real"
+  - unit_4: "P6 archive"
+artifacts:
+  init: true
+  proposal: true
+  specs: true
+  design: true
+  tasks: true
+tasks_progress:
+  completed: [0.1-6.2]
+  pending: []
+last_updated: 2026-08-09
+next: none
+archived_at: 2026-08-09
+verify_result: PASS (5.1 typecheck TS6, 5.2 build esbuild, 5.3 smoke scripted unchanged, 5.4 real smoke navigate+screenshot+analyze with local qwen3-vl:8b; src/ untouched)
+archive_reference: openspec/changes/archive/2026-08-09-deps-update/

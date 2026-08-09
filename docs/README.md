@@ -10,6 +10,7 @@
 
 - `features/clean-architecture-refactor.md` — Feature SDD del refactor: alcance, criterios de aceptación y estado del pipeline.
 - `openspec/specs/command-code-compat/spec.md` — Spec de compatibilidad con Command Code (docs + smoke test + verificación real). Change archivado en `openspec/changes/archive/2026-08-09-command-code-compat/`.
+- `openspec/specs/deps-update/spec.md` — Spec de actualización de dependencias (playwright 1.62, MCP SDK 1.30, TS 6, etc.). Change archivado en `openspec/changes/archive/2026-08-09-deps-update/`.
 
 ## Notas de desarrollo
 

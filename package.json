@@ -1,12 +1,13 @@
 {
   "name": "browserlens",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Vision-focused MCP server for browser automation, timestamped screenshots, visual analysis, OCR, and image-to-Markdown through Ollama, OpenAI, or custom providers.",
   "type": "module",
   "bin": {
-    "browserlens": "./dist/main.js"
+    "browserlens": "./bin/browserlens"
   },
   "files": [
+    "bin",
     "dist",
     "README.md",
     "CONTRIBUTING.md",
@@ -20,7 +21,6 @@
     "start": "node dist/main.js",
     "dev": "tsx src/main.ts",
     "typecheck": "tsc --noEmit",
-    "smoke": "npm run build && node scripts/smoke-mcp.mjs",
     "prepack": "npm run build"
   },
   "keywords": [
@@ -36,19 +36,19 @@
   "dependencies": {
     "@automapper/core": "^9.0.2",
     "@automapper/pojos": "^9.0.2",
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/sdk": "^1.13.0",
     "openai": "^7.4.0",
-    "playwright": "^1.62.1",
+    "playwright": "^1.64.0",
     "reflect-metadata": "^0.2.2",
     "sharp": "^0.35.3",
     "tsyringe": "^4.10.0",
-    "zod": "^3.25.76"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/node": "^24.13.3",
-    "esbuild": "^0.28.2",
+    "@types/node": "^22.10.2",
+    "esbuild": "^0.28.0",
     "tsx": "^4.23.11",
-    "typescript": "^6.0.3"
+    "typescript": "^5.7.2"
   },
   "engines": {
     "node": ">=20"

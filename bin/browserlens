@@ -1,0 +1,37 @@
+#!/bin/sh
+//bin/sh 2>/dev/null; SELF="$0"; if [ -L "$SELF" ]; then SELF="$(readlink -f "$SELF" 2>/dev/null || readlink "$SELF")"; fi; NODE_CMD="${BROWSERLENS_NODE:-}"; if [ -z "$NODE_CMD" ] && command -v node >/dev/null 2>&1; then NODE_CMD="$(command -v node)"; fi; if [ -z "$NODE_CMD" ] && [ -x /opt/homebrew/bin/node ]; then NODE_CMD=/opt/homebrew/bin/node; fi; if [ -z "$NODE_CMD" ] && [ -x /usr/local/bin/node ]; then NODE_CMD=/usr/local/bin/node; fi; if [ -z "$NODE_CMD" ]; then echo "browserlens requires node.js, but 'node' was not found in PATH." >&2; echo 'Fix: add the node bin directory to PATH, e.g. export PATH="/opt/homebrew/bin:$PATH"' >&2; echo "     or invoke directly as: node $(cd "$(dirname "$SELF")/.." && pwd)/dist/main.js" >&2; exit 1; fi; DIR="$(cd "$(dirname "$SELF")/.." && pwd)"; if [ ! -x "$NODE_CMD" ]; then echo "browserlens: resolved node '$NODE_CMD' is not executable." >&2; echo "     fix BROWSERLENS_NODE or add the node bin dir to PATH" >&2; exit 1; fi; exec "$NODE_CMD" "$DIR/dist/main.js" "$@"
+/* Node half: when invoked as `node /path/to/browserlens`, node parses this
+ * file as ESM/JS. The line above is shell code that node treats as a `//bin/sh`
+ * comment (the first `//` starts a line comment in JS). Resolve node and exec
+ * the real bundle. `import.meta.url` already resolves symlinks, so the bundle
+ * path is correct even when installed globally via npm. */
+import { spawnSync } from "node:child_process";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const bundle = join(here, "..", "dist", "main.js");
+const candidates = [
+  process.env.BROWSERLENS_NODE,
+  "node",
+  "/opt/homebrew/bin/node",
+  "/usr/local/bin/node",
+].filter(Boolean);
+
+let nodeBin = null;
+for (const c of candidates) {
+  try {
+    const r = spawnSync(c, ["--version"], { stdio: "ignore" });
+    if (r.status === 0) { nodeBin = c; break; }
+  } catch { /* keep looking */ }
+}
+
+if (!nodeBin) {
+  console.error("browserlens requires node.js, but 'node' was not found in PATH.");
+  console.error('Fix: add the node bin directory to PATH, e.g. export PATH="/opt/homebrew/bin:$PATH"');
+  console.error(`     or invoke directly as: node ${bundle}`);
+  process.exit(1);
+}
+
+const r = spawnSync(nodeBin, [bundle, ...process.argv.slice(2)], { stdio: "inherit", env: process.env });
+process.exit(r.status ?? 1);

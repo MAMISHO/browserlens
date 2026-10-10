@@ -11,8 +11,14 @@ import { SHARED_TOKENS } from "./shared/tokens.js";
 const controller = container.resolve(MCP_TOKENS.McpController);
 
 const server = new Server(
-  { name: "browserlens", version: "0.2.0" },
-  { capabilities: { tools: {} } }
+  { name: "browserlens", version: "0.3.0" },
+  {
+    capabilities: { tools: {} },
+    instructions:
+      "Use BrowserLens for browser navigation, rendered-page screenshots, visual comparison, OCR, and image-to-Markdown. " +
+      "Prefer browser_snapshot for cheap text inspection, then capture_screenshot and visual tools only when the rendered UI matters. " +
+      "Return the structured or textual result to the user; screenshot paths are local files and are not image bytes.",
+  }
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => controller.listTools());

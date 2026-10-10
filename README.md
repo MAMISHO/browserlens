@@ -199,37 +199,37 @@ npm run dev
 
 ## MCP Configuration
 
-Point your MCP client at the built stdio server. Configure the local Ollama endpoint and models in the MCP entry so each user can choose their own local setup without changing BrowserLens code:
+BrowserLens is a standard MCP server using stdio transport. It works with Codex CLI, OpenCode, Claude Desktop, Cursor, VS Code Copilot, and other MCP clients. Point your client at the package or built server and configure the vision/OCR providers in the MCP entry so each user can choose their own setup without changing BrowserLens code.
 
-```json
-{
-  "mcp": {
-    "browserlens": {
-      "command": "node",
-      "args": ["/absolute/path/to/browserlens/dist/mcpServer.js"],
-      "env": {
-        "OLLAMA_BASE_URL": "http://localhost:11434",
-        "VISION_PROVIDER": "ollama",
-        "VISION_MODEL": "qwen3-vl:8b",
-        "OCR_PROVIDER": "ollama",
-        "OCR_MODEL": "deepseek-ocr",
-        "BROWSERLENS_SCREENSHOT_DIR": "/custom/writable/path"
-      }
-    }
-  }
-}
+### Install
+
+```bash
+npm install -g browserlens
 ```
 
-### OpenCode Example
+Or run it on demand without installing (after publishing):
 
-For OpenCode, put the local model configuration in the MCP server entry. The exact file location depends on your OpenCode setup, but the important part is the `env` block:
+```bash
+npx -y browserlens
+```
+
+For local development, point the MCP client at the built bundle:
+
+```bash
+npm run build
+# entrypoint: dist/main.js
+```
+
+### Generic `mcpServers` entry (any client)
+
+The community-standard MCP config shape works in every client:
 
 ```json
 {
-  "mcp": {
+  "mcpServers": {
     "browserlens": {
-      "command": "node",
-      "args": ["/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "command": "npx",
+      "args": ["-y", "browserlens"],
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434",
         "VISION_PROVIDER": "ollama",
@@ -242,7 +242,81 @@ For OpenCode, put the local model configuration in the MCP server entry. The exa
 }
 ```
 
-#### Using environment variables for API keys
+The main agent model is configured in your MCP client or agent runtime, not in BrowserLens. BrowserLens only needs the local models it calls directly: one visual model for `analyze_image` and `compare_images`, and one OCR model for `extract_text`.
+
+### Codex CLI
+
+Register the server with the Codex CLI. Codex stores this configuration in `~/.codex/config.toml` and shares it with its IDE integration:
+
+```bash
+codex mcp add browserlens \
+  --env OLLAMA_BASE_URL=http://localhost:11434 \
+  --env VISION_PROVIDER=ollama \
+  --env VISION_MODEL=qwen3-vl:8b \
+  --env OCR_PROVIDER=ollama \
+  --env OCR_MODEL=deepseek-ocr \
+  -- npx -y browserlens
+```
+
+Verify the registration:
+
+```bash
+codex mcp list
+```
+
+For a local checkout, build it and register the launcher or the bundle directly:
+
+```bash
+npm run build
+codex mcp add browserlens \
+  --env OLLAMA_BASE_URL=http://localhost:11434 \
+  --env VISION_PROVIDER=ollama --env VISION_MODEL=qwen3-vl:8b \
+  --env OCR_PROVIDER=ollama --env OCR_MODEL=deepseek-ocr \
+  -- /absolute/path/to/browserlens/bin/browserlens
+```
+
+The equivalent `~/.codex/config.toml` entry is:
+
+```toml
+[mcp_servers.browserlens]
+command = "npx"
+args = ["-y", "browserlens"]
+
+[mcp_servers.browserlens.env]
+OLLAMA_BASE_URL = "http://localhost:11434"
+VISION_PROVIDER = "ollama"
+VISION_MODEL = "qwen3-vl:8b"
+OCR_PROVIDER = "ollama"
+OCR_MODEL = "deepseek-ocr"
+```
+
+Codex loads MCP configuration when a session starts. After changing the entry, start a new Codex session and use `codex mcp list` to verify it. BrowserLens tools will be available to the agent under the server name `browserlens`.
+
+For API keys, pass them through `--env` or use the environment inherited by Codex. Do not commit secrets to `config.toml` or project files.
+
+### OpenCode
+
+For OpenCode, put the local model configuration in the MCP server entry. The exact file location depends on your OpenCode setup, but the important part is the `env` block:
+
+```json
+{
+  "mcp": {
+    "browserlens": {
+      "command": "node",
+      "args": ["/absolute/path/to/browserlens/dist/main.js"],
+      "env": {
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "VISION_PROVIDER": "ollama",
+        "VISION_MODEL": "qwen3-vl:8b",
+        "OCR_PROVIDER": "ollama",
+        "OCR_MODEL": "deepseek-ocr"
+      }
+    }
+  }
+}
+```
+
+#### Using environment variables for API keys (OpenCode)
 
 For OpenCode, the `env` block is the single source of truth for the server process. Instead of hardcoding an API key in `opencode.json`, use the `{env:VAR}` interpolation syntax. OpenCode resolves the value from its own environment when it loads the config, and the MCP server receives only the resolved token. The server never sees the environment variable name, so you can use any name you like in your shell.
 
@@ -255,7 +329,7 @@ Ollama (no API key required):
   "mcp": {
     "browserlens": {
       "type": "local",
-      "command": ["node", "/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "command": ["node", "/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434",
         "VISION_PROVIDER": "ollama",
@@ -275,7 +349,7 @@ OpenAI-compatible API:
   "mcp": {
     "browserlens": {
       "type": "local",
-      "command": ["node", "/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "command": ["node", "/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "VISION_PROVIDER": "openai",
         "VISION_OPENAI_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
@@ -293,7 +367,7 @@ Custom provider:
   "mcp": {
     "browserlens": {
       "type": "local",
-      "command": ["node", "/absolute/path/to/browserlens/dist/mcpServer.js"],
+      "command": ["node", "/absolute/path/to/browserlens/dist/main.js"],
       "env": {
         "VISION_PROVIDER": "custom",
         "VISION_CUSTOM_BASE_URL": "https://internal-api.example.com/v1",
@@ -318,67 +392,20 @@ Where and how to define the environment variable:
 - It applies only to the shell that launches OpenCode. If you launch OpenCode from a terminal, it inherits the profile. If you launch it from the Finder or another GUI (which does not source `~/.zshrc`), the variable will be empty.
 - After editing `~/.zshrc`, open a new terminal (or run `source ~/.zshrc`) and restart OpenCode. Configuration is loaded once at startup and is not hot-reloaded.
 
-If you are using another tested local model, change only the values:
+### Desktop apps and minimal PATH (troubleshooting)
 
-```json
-{
-  "mcp": {
-    "browserlens": {
-      "command": "node",
-      "args": ["/absolute/path/to/browserlens/dist/mcpServer.js"],
-      "env": {
-        "OLLAMA_BASE_URL": "http://localhost:11434",
-        "VISION_PROVIDER": "custom",
-        "VISION_CUSTOM_BASE_URL": "https://internal-api.example.com/v1",
-        "VISION_CUSTOM_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
-        "VISION_CUSTOM_MODEL": "your-custom-vision-model",
-        "OCR_PROVIDER": "custom",
-        "OCR_CUSTOM_BASE_URL": "https://internal-api.example.com/v1",
-        "OCR_CUSTOM_API_KEY": "{env:CUSTOM_INTERPOLATION_ENV_VAR}",
-        "OCR_CUSTOM_MODEL": "your-custom-ocr-or-vision-model"
-      }
-    }
-  }
-}
-```
+Desktop MCP clients (Codex IDE, OpenCode Desktop, and other GUI/Electron apps) are launched with a minimal PATH (`/usr/bin:/bin:/usr/sbin:/sbin`) that does **not** include Homebrew's `/opt/homebrew/bin` — where `node`, `npx`, and `browserlens` live on Apple Silicon. If the browserlens bin is a Node script with a `#!/usr/bin/env node` shebang, it fails at startup with the cryptic `env: node: No such file or directory`.
 
-After publishing to npm, clients can also run the package binary:
+BrowserLens ships a launcher shim (`bin/browserlens`) that resolves `node` explicitly instead of relying on the launcher PATH. It checks, in order: `$BROWSERLENS_NODE`, `node` in PATH, `/opt/homebrew/bin/node`, `/usr/local/bin/node`. If none are found, it prints an actionable error. This makes `codex mcp add browserlens -- npx -y browserlens` work from desktop apps.
 
-```json
-{
-  "mcp": {
-    "browserlens": {
-      "command": "npx",
-      "args": ["browserlens"],
-      "env": {
-        "OLLAMA_BASE_URL": "http://localhost:11434",
-        "VISION_MODEL": "qwen3-vl:8b",
-        "OCR_MODEL": "deepseek-ocr"
-      }
-    }
-  }
-}
-```
+If you still hit `env: node: No such file or directory`, any of these fixes work:
 
-The main agent model is configured in your MCP client or agent runtime, not in BrowserLens. BrowserLens only needs the local models it calls directly: one visual model for `analyze_image` and `compare_images`, and one OCR model for `extract_text`.
-
-This pattern also applies to other MCP clients that support environment variables for MCP servers:
-
-```json
-{
-  "mcp": {
-    "browserlens": {
-      "command": "npx",
-      "args": ["browserlens"],
-      "env": {
-        "OLLAMA_BASE_URL": "http://localhost:11434",
-        "VISION_MODEL": "your-qwen-vision-tag",
-        "OCR_MODEL": "your-ocr-model-tag"
-      }
-    }
-  }
-}
-```
+1. Configure the MCP server to invoke `node` explicitly with the bundle path:
+   ```bash
+   codex mcp add browserlens -- /opt/homebrew/bin/node /absolute/path/to/browserlens/dist/main.js
+   ```
+2. Add the node bin directory to the PATH used by the desktop app (e.g. `export PATH="/opt/homebrew/bin:$PATH"` in the profile that launches the app).
+3. Set `BROWSERLENS_NODE` to an absolute node path in the MCP server's `env` block.
 
 ## Configuration
 
@@ -659,15 +686,16 @@ BrowserLens keeps the MCP transport thin and delegates behavior to services:
 
 ```mermaid
 flowchart TB
-  Client["MCP client / agent"] --> Server["mcpServer.ts<br/>schemas, registry, stdio"]
-  Server --> Execute["executeService.ts"]
-  Server --> Browser["playwrightService.ts"]
-  Server --> Vision["visionService.ts"]
-  Server --> OCR["ocrService.ts"]
-  Browser --> Storage["screenshotStorage.ts"]
-  Vision --> Images["imageUtils.ts"]
+  Client["MCP client / agent"] --> Server["main.ts<br/>MCP server, stdio transport"]
+  Server --> Mcp["mcp/<br/>controller, schemas, tool definitions"]
+  Mcp --> Execute["execution/<br/>process runner"]
+  Mcp --> Browser["browser/<br/>Playwright driver + service"]
+  Mcp --> Vision["vision/<br/>analysis + model clients"]
+  Mcp --> OCR["ocr/<br/>OCR + model client"]
+  Browser --> Storage["shared/infra<br/>ScreenshotStorage"]
+  Vision --> Images["shared/infra<br/>ImageProcessor (sharp)"]
   OCR --> Images
-  Vision --> Ollama["ollamaClient.ts"]
+  Vision --> Ollama["vision/infra<br/>Ollama / ChatCompletions"]
   OCR --> Ollama
   Execute --> Process["local child process"]
   Browser --> Chromium["Playwright Chromium"]
@@ -677,18 +705,17 @@ flowchart TB
 
 ```text
 src/
-  mcpServer.ts           MCP schemas, tool registry, stdio transport
-  executeService.ts      local process execution boundary
-  playwrightService.ts   browser automation boundary
-  screenshotStorage.ts   screenshot path and OS storage policy
-  visionService.ts       visual analysis and comparison use cases
-  ocrService.ts          OCR and image-to-Markdown use cases
-  ollamaClient.ts        Ollama HTTP adapter and model lifecycle
-  imageUtils.ts          image optimization helpers
-  types.ts               shared result types
+  main.ts                MCP server bootstrap + composition root wiring
+  container.ts           tsyringe DI container (dependency-ordered)
+  mcp/                   controller, zod schemas, tool definitions, wire mappers
+  browser/               Playwright driver + browser service
+  vision/                visual analysis and comparison use cases + model clients
+  ocr/                   OCR and image-to-Markdown use cases + model client
+  execution/             local process execution boundary
+  shared/                ports (interfaces) + shared infrastructure
 ```
 
-The code follows a small clean-architecture shape: MCP adapters validate input, services own use-case behavior, and infrastructure details such as Playwright, Ollama, filesystem paths, and process execution stay behind narrow modules.
+The code follows a small clean-architecture shape: the MCP adapter validates input and maps wire formats, services own use-case behavior, and infrastructure details such as Playwright, Ollama, filesystem paths, and process execution stay behind narrow modules wired through a DI container.
 
 ## Development
 
@@ -699,7 +726,7 @@ npm run typecheck
 npm run build
 ```
 
-`npm run build` performs a TypeScript compile and then bundles the MCP entrypoint with esbuild into a minified `dist/mcpServer.js`. Dependencies remain external so native packages such as `sharp` and Playwright stay installable and portable.
+`npm run build` performs a TypeScript compile and then bundles the MCP entrypoint with esbuild into a minified `dist/main.js`. Dependencies remain external so native packages such as `sharp` and Playwright stay installable and portable.
 
 Useful checks before opening a pull request:
 

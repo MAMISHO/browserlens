@@ -1,12 +1,13 @@
 {
   "name": "browserlens",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Vision-focused MCP server for browser automation, timestamped screenshots, visual analysis, OCR, and image-to-Markdown through Ollama, OpenAI, or custom providers.",
   "type": "module",
   "bin": {
-    "browserlens": "./dist/main.js"
+    "browserlens": "./bin/browserlens"
   },
   "files": [
+    "bin",
     "dist",
     "README.md",
     "CONTRIBUTING.md",
@@ -37,7 +38,7 @@
     "@automapper/pojos": "^9.0.2",
     "@modelcontextprotocol/sdk": "^1.13.0",
     "openai": "^7.4.0",
-    "playwright": "^1.52.0",
+    "playwright": "^1.64.0",
     "reflect-metadata": "^0.2.2",
     "sharp": "^0.35.3",
     "tsyringe": "^4.10.0",

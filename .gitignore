@@ -6,3 +6,5 @@ coverage/
 *.log
 screenshots/
 .atl/
+/openspec
+/.commandcode

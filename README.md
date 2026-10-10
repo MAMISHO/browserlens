@@ -179,6 +179,20 @@ OCR_MODEL=deepseek-ocr
 
 ## Installation
 
+### From GitHub Releases
+
+Install the latest packaged build directly from GitHub Releases:
+
+```bash
+# Latest release
+npm install https://github.com/MAMISHO/browserlens/releases/latest/download/browserlens.tgz
+
+# Pin a specific version
+npm install https://github.com/MAMISHO/browserlens/releases/download/v0.3.0/browserlens.tgz
+```
+
+Each release publishes the stable asset name `browserlens.tgz`.
+
 ```bash
 npm install
 npx playwright install chromium
